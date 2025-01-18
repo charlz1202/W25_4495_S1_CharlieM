@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../panlasang-panahon"
+		},
+		{
+			"path": "../../finalspractice"
+		}
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}
