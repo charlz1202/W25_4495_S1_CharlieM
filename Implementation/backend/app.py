@@ -1,6 +1,7 @@
 import os
 from sched import scheduler
 from flask import Flask, logging, request, jsonify
+from flask_cors import CORS
 from flask_mail import Mail, Message
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -18,6 +19,22 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app)
+
+
+# Allow CORS for all domains on all routes
+CORS(app, resources={r"/*": {"origins": "*"}},supports_credentials=True)
+
+# Handle preflight requests
+@app.before_request
+def handle_options_request():
+    if request.method == "OPTIONS":
+        response = jsonify({"message": "CORS preflight passed"})
+        response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
 
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -60,16 +77,16 @@ def add_reminder():
 
 
 # ------------------------------
-# API: Get Reminders for a User
+# API: Get Reminders for a pet
 # ------------------------------
-@app.route("/reminders/<owner_id>", methods=["GET"])
-def get_reminders(owner_id):
+@app.route("/reminders/<pet_id>", methods=["GET"])
+def get_reminders(pet_id):
     try:
-        owner_obj_id = ObjectId(owner_id)  # Validate owner_id format
+        pet_obj_id = ObjectId(pet_id)  # Validate pet_id format
     except Exception:
-        return jsonify({"error": "Invalid owner_id format"}), 400
+        return jsonify({"error": "Invalid pet_id format"}), 400
 
-    reminders_list = list(reminders.find({"owner_id": owner_obj_id}, {"_id": 1, "pet_id": 1, "date": 1, "type": 1, "notes": 1, "status": 1}))
+    reminders_list = list(reminders.find({"pet_id": pet_obj_id}, {"_id": 1, "pet_id": 1, "date": 1, "type": 1, "notes": 1, "status": 1}))
 
     if not reminders_list:
         return jsonify({"message": "No reminders found for the user"}), 404
@@ -169,12 +186,14 @@ def test_email():
 def add_pet():
     data = request.json
 
+    owner_id = str(data.get("owner_id", ""))
+
     #Validate input
-    if "owner_id" not in data or "name" not in data or "dob" not in data:
+    if not owner_id or "name" not in data or "dob" not in data:
         return jsonify({"error": "Missing required fields (owner_id), name, dob"}), 400
     
     try:
-        owner_obj_id = ObjectId(data["owner_id"]) # validate owner_id
+        owner_obj_id = ObjectId(owner_id) # validate owner_id
 
     except Exception:
         return jsonify({"error": "Invalid owner_id format"}), 400
@@ -186,7 +205,7 @@ def add_pet():
         
     #Insert pet into the database
     pet_id = pets.insert_one({
-        "owner_id": ObjectId(data["owner_id"]),
+        "owner_id": owner_obj_id,
         "name": data["name"],
         "species": data.get("species", ""),
         "dob": data["dob"], #(format: YYYY-MM-DD)
@@ -204,7 +223,7 @@ def add_pet():
 # --------------------------------
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
 app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
-app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS").lower() == "true"
+app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL").lower() == "true"
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
@@ -229,7 +248,7 @@ def get_pets(owner_id):
         return jsonify({"error": "Invalid owner_id format"}), 400
 
 
-    pets_list = list(pets.find({"owner_id": owner_obj_id}, {"_id": 1, "name": 1, "species": 1, "breed": 1, "dob": 1, "medical_history": 1}))
+    pets_list = list(pets.find({"owner_id": owner_obj_id}, {"_id": 1, "name": 1, "species": 1, "breed": 1, "dob": 1, "color": 1 ,"medical_history": 1}))
 
     if not pets_list:
         return jsonify({"message": "No pets found for the owner"}), 404
