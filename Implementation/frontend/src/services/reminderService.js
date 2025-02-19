@@ -2,11 +2,11 @@ import axios from "axios";
 
 const API_URL = 'http://127.0.0.1:5000'; // Flask API
 
-export const addReminder = async (ownerId,petId,date,type,notes) => {
+export const addReminder = async (ownerId, petId,date,type,notes) => {
     try {
         const token = localStorage.getItem("token");
         const payload = {
-            owner_id: ownerId,
+            owner_id: ownerId,  
             pet_id: petId,
             date: date,
             type: type,
@@ -31,21 +31,35 @@ export const addReminder = async (ownerId,petId,date,type,notes) => {
     
 };
 
-//Get Reminders
-export const getReminders = async (ownerId) => {
+//Get Reminders for pets
+export const getRemindersForPet = async (petId) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${API_URL}/reminders/${ownerId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+        const response = await axios.get(`${API_URL}/reminders/${petId}`, {
+            headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Reminders Response from API:", response.data);
+        console.log("Reminders Response (Pet):", response.data);
         return response.data;
     } catch (error) {
         console.error("Get Reminders Error:", error.response?.data || "No Response");
-        throw error.response?.data?.error || "Failed to fetch reminders";
+        throw error.response?.data?.error || "Failed to fetch reminders for pet";
+    }
+};
+
+// Get Reminders for owner
+export const getRemindersForOwner = async (ownerId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_URL}/reminders/owner/${ownerId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("Reminders Response (Owner):", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Get Reminders Error:", error.response?.data || "No Response");
+        throw error.response?.data?.error || "Failed to fetch reminders for owner";
     }
 };
 
@@ -53,13 +67,18 @@ export const getReminders = async (ownerId) => {
 export const deleteReminder = async (reminderId) => {
     try {
         const token = localStorage.getItem("token");
+        console.log(`Deleting Reminder with ID: ${reminderId}`);
+
         const response = await axios.delete(`${API_URL}/reminders/${reminderId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         });
+
+        console.log("Reminder Deleted:", response.data);
         return response.data;
     } catch (error) {
+        console.error("Delete Reminder Error:", error.response?.data || "No Response");
         throw error.response?.data?.error || "Failed to delete reminder";
     }
 };

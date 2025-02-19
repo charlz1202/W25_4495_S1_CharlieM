@@ -19,7 +19,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+
 
 
 # Allow CORS for all domains on all routes
@@ -55,25 +55,33 @@ def add_reminder():
 
     # Validate input
     if "owner_id" not in data or "pet_id" not in data or "date" not in data:
+        print("Missing required fields", data)
         return jsonify({"error": "Missing required fields (owner_id), pet_id, date"}), 400
     
     try:
-        owner_obj_id = ObjectId(data["owner_id"]) # validate owner_id
+        owner_obj_id = ObjectId(data["owner_id"])
         pet_obj_id = ObjectId(data["pet_id"])
 
-    except Exception:
+    except Exception as e:
+        print("Invalid owner_id or pet_id format", str(e))
         return jsonify({"error": "Invalid owner_id or pet_id format"}), 400
     
-    reminder_id = reminders.insert_one({
-        "owner_id": owner_obj_id,
-        "pet_id": pet_obj_id,
-        "date": data["date"], #(format: YYYY-MM-DD)
-        "type": data.get("type","Other"),
-        "notes": data.get("notes", ""),
-        "status": "Pending"
-    }).inserted_id
+    try: 
+        reminder_id = reminders.insert_one({
+            "owner_id": owner_obj_id,
+            "pet_id": pet_obj_id,
+            "date": data["date"], #(format: YYYY-MM-DD)
+            "type": data.get("type","Other"),
+            "notes": data.get("notes", ""),
+            "status": "Pending"
+        }).inserted_id
 
-    return jsonify({"message": "Reminder added successfully", "reminder_id": str(reminder_id)}), 201
+        print("Reminder added successfully", reminder_id)   
+        return jsonify({"message": "Reminder added successfully", "reminder_id": str(reminder_id)}), 201
+
+    except Exception as e:
+        print("Error adding reminder", str(e))
+        return jsonify({"error": "Error adding reminder"}), 500
 
 
 # ------------------------------
@@ -86,15 +94,39 @@ def get_reminders(pet_id):
     except Exception:
         return jsonify({"error": "Invalid pet_id format"}), 400
 
-    reminders_list = list(reminders.find({"pet_id": pet_obj_id}, {"_id": 1, "pet_id": 1, "date": 1, "type": 1, "notes": 1, "status": 1}))
+    reminders_list = list(reminders.find({"pet_id": pet_obj_id}, 
+                                         {"_id": 1, "date": 1, "type": 1, "notes": 1, "status": 1, "pet_id": 1}))
 
     if not reminders_list:
-        return jsonify({"message": "No reminders found for the user"}), 404
+        return jsonify({"message": "No reminders found for this pet"}), 404
 
     # Convert ObjectId to string before returning the response
     for reminder in reminders_list:
         reminder["_id"] = str(reminder["_id"])
-        reminder["pet_id"] = str(reminder["pet_id"])
+        reminder["pet_id"] = str(reminder.get("pet_id","unknown"))
+
+    return jsonify(reminders_list), 200
+
+# ------------------------------
+# API: Get All Reminders for an owner
+# ------------------------------
+@app.route("/reminders/owner/<owner_id>", methods=["GET"])
+def get_all_reminders(owner_id):
+    try:
+        owner_obj_id = ObjectId(owner_id)  # Validate owner_id format
+    except Exception:
+        return jsonify({"error": "Invalid owner_id format"}), 400       
+    
+    reminders_list = list(reminders.find({"owner_id": owner_obj_id},
+                                         {"_id": 1, "date": 1, "type": 1, "notes": 1, "status": 1, "pet_id": 1}))
+    
+    if not reminders_list:
+        return jsonify({"message": "No reminders found for this owner"}), 404   
+    
+    # Convert ObjectId to string before returning the response
+    for reminder in reminders_list:
+        reminder["_id"] = str(reminder["_id"])
+        reminder["pet_id"] = str(reminder.get("pet_id","unknown"))  
 
     return jsonify(reminders_list), 200
 

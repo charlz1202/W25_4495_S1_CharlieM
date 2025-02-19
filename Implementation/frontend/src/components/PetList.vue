@@ -1,8 +1,8 @@
 <template>
     <div class="container">
-        <h1 class="title">My Pets</h1>
+        <h3 class="title">Add a new pet</h3>
         
-        <!-- Add a form to add a new pet -->
+        <!-- Form to add a new pet -->
         <form @submit.prevent="addNewPet" class="pet-form">
             <input v-model="name" type="text" placeholder="Pet Name" required />
             <input v-model="species" type="text" placeholder="Species" required />
@@ -13,31 +13,48 @@
         </form>
 
         <!-- Display a list of pets -->
-         <h3 class="list-title">My Pet list</h3>
-         <ul v-if="pets.length > 0" class ="pet-list">
-             <li v-for="pet in pets" :key="String(pet._id)" class="pet-item">
-                 <router-link :to="{ name: 'PetProfile', params: { id: pet._id }}" class="pet-name">
-                     {{ pet.name }}
-                 </router-link>
-                 <button @click="deletePet(pet._id)" class="delete-btn">Delete</button>
-             </li>
-         </ul>
-         <p v-else class="no-pets">No pets found.</p>
+        <h2 class="list-title">My Pet List</h2>
+        <div v-if="pets.length > 0" class="pet-list">
+            <div v-for="pet in pets" :key="String(pet._id)" class="pet-card">
+                <img src="/pet-placeholder.jpg" alt="Pet" class="pet-image" />
+                <h3 class="pet-name">{{ pet.name }}</h3>
+                <p><strong>Species:</strong> {{ pet.species }}</p>
+                <p><strong>Breed:</strong> {{ pet.breed || 'N/A' }}</p>
+                <p><strong>Color:</strong> {{ pet.color || 'N/A' }}</p>
+                <p><strong>Age:</strong> {{ pet.age }}</p>
+
+                <div class="card-actions">
+                    <router-link :to="{ name: 'PetProfile', params: { id: pet._id }}" class="view-profile">
+                        View Profile
+                    </router-link>
+                    <button @click="deletePet(pet._id)" class="delete-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+        <p v-else class="no-pets">No pets found.</p>
     </div>
 </template>
+
 
 <style scoped>
 /* Container Styling */
 .container {
-    max-width: 600px;
+    max-width: 900px;
     margin: 0 auto;
     text-align: center;
 }
 
 /* Title Styling */
 .title {
-    font-size: 28px;
+    font-size: 20px;
     color: #fff;
+}
+
+/* List Title */
+.list-title {
+    font-size: 30px;
+    color: #fff;
+    margin-top: 30px;
 }
 
 /* Form Styling */
@@ -46,7 +63,7 @@
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 50px
 }
 
 .pet-form input {
@@ -73,51 +90,86 @@
 }
 
 /* Pet List Styling */
-.list-style {
-   font-size: 20px;
-   color: white;
-   margin-bottom: 10px;
-}
-
 .pet-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 10px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
 }
 
-.pet-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-    padding: 10px;
-    border-radius: 5px solid #ccc;
+.pet-card {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.pet-card:hover {
+    transform: scale(1.05);
+}
+
+/* Pet Image */
+.pet-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
     margin-bottom: 10px;
 }
 
+/* Pet Name */
 .pet-name {
-    flex-grow: 1;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fdd835;
+}
+
+/* Card Actions */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.view-profile {
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.view-profile:hover {
+    background-color: #218838;
 }
 
 .delete-btn {
-    background-color: red;
+    background-color: #dc3545;
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 3px;
-    cursor:pointer;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
 .delete-btn:hover {
-    background-color: darkred;
+    background-color: #c82333;
 }
 
-/* No Pets Found Styling */
+/* No Pets Message */
 .no-pets {
-    color: white;
     font-size: 18px;
+    color: #fff;
     margin-top: 20px;
-}
+}   
 
 </style>
 

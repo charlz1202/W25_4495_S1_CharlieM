@@ -16,11 +16,11 @@
 
         <!-- Add Reminder Form-->
          <h2 class="reminder-title">Add Reminder</h2>
-         <form @submit.prevent="addReminder" class="reminder-form">
+         <form class="reminder-form">
              <input v-model="newReminder.date" type="date" required class="input-field" />
              <input v-model="newReminder.type" type="text" placeholder="Reminder Type (e.g. Vet Visit, Vaccine)" required class="input-field"  />
              <textarea v-model="newReminder.notes" placeholder="Notes (optional)" class="input-field"></textarea>
-             <button type="submit" class="add-btn">Add Reminder</button>
+             <button type="submit" @click="addNewReminder" class="add-btn">Add Reminder</button>
         </form>
 
         <!-- Reminder List-->
@@ -136,7 +136,7 @@
 
 <script>
 import { getPets, deletePet } from '../services/petService.js';
-import { getReminders, deleteReminder, addReminder } from '../services/reminderService.js';
+import { getRemindersForPet, deleteReminder, addReminder } from '../services/reminderService.js';
 
 export default { 
     data() {
@@ -182,13 +182,13 @@ export default {
 
         async fetchReminders() {
             try {
-                const ownerId = localStorage.getItem('user_id');
-                if(!ownerId) {
+                const petId = this.$route.params.id;
+                if(!petId) {
                     throw new Error('User not logged in');
                 }
 
-                    this.reminders = await getReminders(ownerId);
-                    console.log('Reminders: ', this.reminders);
+                    this.reminders = await getRemindersForPet(petId);
+                    console.log('Reminders fetched: ', this.reminders);
                 
             } catch (error) {   
                 console.error('Error fetching reminders: ', error);
@@ -205,7 +205,7 @@ export default {
                 
                 console.log('Adding reminder for pet', petId);
                 
-                await addReminder(localStorage.getItem("user_id"), petId, this.newReminder.date, this.newReminder.type, this.newReminder.notes);
+                await addReminder(ownerId, petId, this.newReminder.date, this.newReminder.type, this.newReminder.notes);
 
                 alert('Reminder added successfully');
 
