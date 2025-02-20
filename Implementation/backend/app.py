@@ -364,6 +364,28 @@ def login():
 
 
 # ------------------------------
+# API: Chatbot  
+# ------------------------------
+@app.route("/chatbot", methods=["POST"])
+
+def chatbot():
+    data = request.json
+    user_message = data.get("message", "").lower()
+
+    response = {
+        "hello": "Hello! How can I help you today?",
+        "vet": "You can find a vet near you by searching online or using a vet directory.",
+        "food": "You can find pet food at your local pet store or online.",
+        "play": "Playing with your pet is a great way to bond and keep them active.",
+        "vaccine": "Please consult your vet for information on pet vaccinations.",
+        "grooming": "Regular grooming is important for your pet's health and hygiene.",
+        "bye": "Goodbye! Have a great day."
+    }
+
+    reply = response.get(user_message, "I'm sorry, I don't understand. Please ask me something else.")
+    return jsonify({"reply": reply}), 200
+
+# ------------------------------
 # Run Flask App
 # ------------------------------
 if __name__ == "__main__":

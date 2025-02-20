@@ -33,16 +33,25 @@
                 <button @click="deleteReminder(reminder._id)" class="delete-btn">Delete</button>
             </li>
         </ul>
-        <p v-else class="no-reminders">No reminders found for this pet.</p>      
+        <p v-else class="no-reminders">No reminders found for this pet.</p>          
 </div>
+
+  <!--Back to Dashboard-->
+  <button @click="goToDashboard" class="back-btn">Back to Dashboard</button>
+
+
 </template>
 
 <style scoped>
 /* Container Styling */
 .container {
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
     text-align: center;
+    padding: 20px;
+    background: #222;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
 }
 
 /* Title Styling */
@@ -58,12 +67,19 @@
 
 /* Pet Details*/
 .pet-details {
-    background: #222;
+    background: #333;
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    text-align: left;
     margin-bottom: 20px;
-    text-align:left;
+    color: #fff;
     
+}
+
+.pet-details p {
+    font-size: 16px;
+    margin-bottom: 8px;
 }
 
 /* Reminder Form Styling */
@@ -75,6 +91,7 @@
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 
 .iput-field {
@@ -86,12 +103,14 @@
 
 /* Add Button */
 .add-btn {
+    width: 100%;
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px;
     border-radius: 5px;
     cursor: pointer;
+    transition: 0.3s;
 }   
 
 .add-btn:hover {
@@ -110,14 +129,24 @@
     color: #f00;
 }
 
+.reminder-item {
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.2);
+}
+
 /* Delete Button Styling */
 .delete-btn {
-    background-color: #f00;
-    color: #fff;
+    width: 100%;
+    background-color: #007bff;
+    color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 12px;
     border-radius: 5px;
     cursor: pointer;
+    transition: 0.3s;
 }
 
 .delete-btn:hover {
@@ -128,6 +157,25 @@
 .loading {
     color:white;
     font-size: 18px;
+}
+
+/* Back Button */
+.back-btn {
+    display: block; 
+    margin: 20px auto;  
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+}
+
+.back-btn:hover {
+    background-color: #0056b3;
 }
 
 </style>
@@ -178,6 +226,10 @@ export default {
             } catch (error) {
                 console.error('Error fetching pet details: ', error);
             }
+        },
+
+        async goToDashboard() {
+            this.$router.push('/dashboard');
         },
 
         async fetchReminders() {
@@ -235,17 +287,19 @@ export default {
             } catch (error) {
                 console.error('Error deleting pet: ', error);
             }
-        }
-    },
+        },
+    
 
-    async deleteReminder(reminderId) {
-        try {
-            await deleteReminder(reminderId);
-            this.reminders = this.reminders.filter(reminder => reminder._id !== reminderId);
-            alert('Reminder deleted successfully');
-        } catch (error) {
-            console.error('Error deleting reminder: ', error);
+        async deleteReminder(reminderId) {
+            try {
+                await deleteReminder(reminderId);
+                this.reminders = this.reminders.filter(reminder => reminder._id !== reminderId);
+                alert('Reminder deleted successfully');
+            } catch (error) {
+                console.error('Error deleting reminder: ', error);
+            }
         }
     }
 };
+
 </script>

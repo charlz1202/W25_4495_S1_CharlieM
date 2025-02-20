@@ -8,10 +8,15 @@
         <!-- Reminders -->
         <h2 class="section-title">Upcoming Reminders</h2>
         <ReminderList />
-    </div>
+
+        <!-- Chatbot -->
+        <Chatbot />
+        
+        </div>
 </template>
 
 <script>
+import Chatbot from "../components/Chatbot.vue";
 import PetList from "../components/PetList.vue";
 import ReminderList from "../components/ReminderList.vue";
 
@@ -19,6 +24,7 @@ export default {
   components: {
     PetList,
     ReminderList,
+    Chatbot,
   },
 };  
 </script>
