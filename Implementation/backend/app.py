@@ -11,6 +11,8 @@ import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 
+from yelp_service import search_yelp
+
 # Initialize scheduler
 scheduler = APScheduler()
 
@@ -384,6 +386,19 @@ def chatbot():
 
     reply = response.get(user_message, "I'm sorry, I don't understand. Please ask me something else.")
     return jsonify({"reply": reply}), 200
+
+# ------------------------------
+# API: Yelp Search  
+# ------------------------------
+@app.route("/api/yelp/search", methods=["GET"])
+
+def yelp_search():
+    location = request.args.get("location")
+    term = request.args.get("term")
+    category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting")
+
+    result = search_yelp(location, term, category)
+    return jsonify(result)
 
 # ------------------------------
 # Run Flask App
