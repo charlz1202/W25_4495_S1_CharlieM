@@ -397,7 +397,7 @@ def yelp_search():
     term = request.args.get("term")
     category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting")
 
-    result = search_yelp(location, term, category)
+    result = search_yelp(term, location, category)
     return jsonify(result)
 
 # ------------------------------

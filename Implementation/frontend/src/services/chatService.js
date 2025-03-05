@@ -4,19 +4,31 @@ const API_URL = "http://127.0.0.1:5000";
 
 export const sendMessageToChatbot = async (message) => {
     try {
-        const response = await axios.post(`${API_URL}/chatbot`, { message,}, {
-            headers: {
-                "Content-Type": "application/json",
-            },
+        
+        if (message.toLowerCase().includes("find") || message.toLowerCase().includes("search")) {
+            const location = "New Westminster, BC";
+            const response = await axios.get(`/api/yelp/search`, {
+                params: {
+                    term:message,
+                    location: location
+                }
         });
 
-        console.log("Chatbot API Response", response.data);
+        const businesses = response.data.businesses.map(biz => 
+            '${biz.name} - Rating: ${biz.rating} - ${biz.location.address1}'
+        ).join("\n");
 
-        return response.data;
+        return {
+            reply: businesses || "No results found"};
+        }
+
+        const chatbotResponse = await axios.post("/api/chatbot", {
+            message
+        });
+        return chatbotResponse.data;
 
     } catch (error) {
-        console.error("Chatbot API Error",error.response?.data || error);
-        throw error.response?.data?.error || "Failed to send message to chatbot";
-        
-    }   
+        console.error(error);
+        return { reply: "Sorry, something went wrong" };
+    }
 };

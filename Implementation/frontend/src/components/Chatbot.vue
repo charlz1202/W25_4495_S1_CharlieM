@@ -43,29 +43,24 @@ export default {
             try {
 
                 console.log("Sending message to chatbot: ", this.newMessage);
-
                 const response = await sendMessageToChatbot(this.newMessage);
-
                 console.log("Chatbot response: ", response);
 
-                const replyText = response.data?.reply || response.reply;
-
-                if (replyText) {
-                    this.messages.push({ text: replyText, from: "bot" });
+                if(Array.isArray(response.reply)) {
+                    this.messages.push({ text: response.reply, from: "bot", isList: true });
                 } else {
-                    this.messages.push({ text: "Sorry, I didn't understand that.", from: "bot" });  
+                    this.this.messages.push({ text: response.reply, from: "bot", isList: false });
                 }
-             
             } catch (error) {
                 console.error("Error sending message to chatbot: ", error);
                 this.messages.push({ text: "Sorry, I didn't understand that.", from: "bot" });
             }
 
-            this.newMessage = "";
-            
+            this.newMessage = "";          
         },
     },
 };
+
 </script>
 
 
