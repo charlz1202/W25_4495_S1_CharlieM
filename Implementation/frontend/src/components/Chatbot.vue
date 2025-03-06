@@ -15,9 +15,13 @@
                 <!-- Formatting for Yelp Responses -->
                 <ul v-else-if="Array.isArray(message.text)" class="business-list">
                     <li v-for="(business, i) in message.text" :key="i" class="business-item">
-                        <strong>🐾 {{ business.name }}</strong> <br />
-                        ⭐ Rating: <strong>{{ business.rating }}</strong> <br />
-                        📍 Location: {{ business.address || 'No address available' }}
+                        <div class="business-header">
+                            🏥 <strong>{{ business.name }}</strong>
+                        </div>
+                        <div class="business-details">
+                            <span v-if="business.rating !== 'N/A'">⭐ <strong>Rating:</strong> {{ business.rating }}</span><br />
+                            <span v-if="business.address !== 'No address available'">📍 <strong>Address:</strong> {{ business.address }}</span>
+                        </div>
                     </li>
                 </ul>
 
@@ -69,13 +73,13 @@ export default {
 
                 if(Array.isArray(response.reply)) {
                   const formattedBusinesses = response.reply.map((business) => {
-                        const parts = business.split(" - Rating: ");
-                        return {
-                            name: parts[0].trim(),
-                            rating: parts[1]?.split(" - (")[0]?.trim(),
-                            address: parts[1]?.split(" - (")[1]?.replace(")", "").trim(),
-                        };
-                      });
+                    return {
+                      name: business.name || "No name available",
+                      rating: business.rating || "N/A",
+                      address: business.address || "No address available"
+                    };
+                  });
+                  
                     this.messages.push({ text: formattedBusinesses, from: "bot" });
                 } else {
                     this.messages.push({ text: response.reply || "Sorry, I didn't understand that.", from: "bot" });
@@ -94,6 +98,67 @@ export default {
 
 
 <style scoped>
+
+/* Business List Styling */
+.business-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Individual Business Item */
+.business-item {
+  background: #f9f9f9;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border-left: 5px solid #ff9800; /* Orange highlight */
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styling for Business Name */
+.business-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Business Details Styling */
+.business-details {
+  font-size: 12px;
+  color: #555;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+/* Message Style */
+.message {
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* User Message */
+.user {
+  background: #007bff;
+  color: white;
+  align-self: flex-end;
+}
+
+/* Bot Message */
+.bot {
+  background: #f0f0f0;
+  color: #333;
+  align-self: flex-start;
+}
+
+
 /* Floating Chatbot Icon */
 .chatbot-icon {
   position: fixed;
@@ -128,6 +193,7 @@ export default {
   flex-direction: column;
 }
 
+/* Chat Header */
 .chat-header {
   background: #ff9800;
   color: #fff;
@@ -136,44 +202,23 @@ export default {
   border-top-right-radius: 10px;
   display: flex;
   justify-content: space-between;
+  font-size: 14px;
 }
 
+/* Chat message style */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 10px;
+  font-size: 12px;
 }
 
-.message {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 5px;
-}
-
-.user {
-  background: #007bff;
-  color: #fff;
-  align-self: flex-end;
-}
-
-.bot {
-  background: #f0f0f0;
-  color: #333;
-  align-self: flex-start;
-}
-
+/* Chat input from user */
 .chat-input {
   display: flex;
   gap: 10px;
   padding: 10px;
 }   
-
-.chat-input input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
 
 .chat-input button {
   padding: 8px 12px;

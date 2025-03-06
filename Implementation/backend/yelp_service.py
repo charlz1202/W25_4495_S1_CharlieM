@@ -18,7 +18,7 @@ if not API_KEY:
 # Yelp API Base URL
 BASE_URL = "https://api.yelp.com/v3/businesses/search"
 
-def search_yelp(term, location, category="pets"):
+def search_yelp(term="pet services", location="New Westminser, BC", category="petservices,groomer,vet,dog_parks,petstore,pet_training,petboarding"):
     headers = {
         "Authorization":f"Bearer {API_KEY}",
         "Content-Type": "application/json"
@@ -31,7 +31,8 @@ def search_yelp(term, location, category="pets"):
         "limit": 5
     }
 
-    print(f"Sending request to Yelp API with parameters: {params}")
+    # Debugging Purpose
+    print(f"Searching Yelp API for {term}: {params}")
     print(f"API_KEY: {API_KEY}")
 
     response = requests.get(BASE_URL, headers=headers, params=params)
@@ -41,5 +42,6 @@ def search_yelp(term, location, category="pets"):
     else:
         print(f"Failed to fetch data from Yelp API. Status code: {response.text}")
         return {
-            "error": f"Failed to fetch data from Yelp API. Status code: {response.status_code}"
+            "error": f"Failed to fetch data from Yelp API. Status code: {response.status_code}",
+            "details": response.json()
         }
