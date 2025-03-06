@@ -9,8 +9,19 @@
             <button @click="toggleChatbot" class="close-btn">X</button>
         </div>
         <div class="chat-messages">
-            <div v-for="(message, index) in messages" :key="index" :class="['message',message.from]">
-                <p>{{ message.text }}</p>
+          <div v-for="(message, index) in messages" :key="index" :class="['message', message.from]">
+                <p v-if="typeof message.text === 'string'">{{ message.text }}</p>
+                
+                <!-- Formatting for Yelp Responses -->
+                <ul v-else-if="Array.isArray(message.text)" class="business-list">
+                    <li v-for="(business, i) in message.text" :key="i" class="business-item">
+                        <strong>🐾 {{ business.name }}</strong> <br />
+                        ⭐ Rating: <strong>{{ business.rating }}</strong> <br />
+                        📍 Location: {{ business.address || 'No address available' }}
+                    </li>
+                </ul>
+
+                <p v-else>{{ message.text || "I couldn't understand that." }}</p>
             </div>
         </div>
     <div class="chat-input">
@@ -38,18 +49,36 @@ export default {
         async sendMessage() {
             if (!this.newMessage.trim()) return;
 
+            if(!Array.isArray(this.messages)) {
+                this.messages = [];
+            } 
+
             this.messages.push({ text: this.newMessage, from: "user" });
 
             try {
 
                 console.log("Sending message to chatbot: ", this.newMessage);
                 const response = await sendMessageToChatbot(this.newMessage);
+
                 console.log("Chatbot response: ", response);
 
+                if(!response|| typeof response !== "object" || !("reply" in response)) {
+                    this.messages.push({ text: "Sorry, I didn't understand that.", from: "bot" });
+                    return;
+                }
+
                 if(Array.isArray(response.reply)) {
-                    this.messages.push({ text: response.reply, from: "bot", isList: true });
+                  const formattedBusinesses = response.reply.map((business) => {
+                        const parts = business.split(" - Rating: ");
+                        return {
+                            name: parts[0].trim(),
+                            rating: parts[1]?.split(" - (")[0]?.trim(),
+                            address: parts[1]?.split(" - (")[1]?.replace(")", "").trim(),
+                        };
+                      });
+                    this.messages.push({ text: formattedBusinesses, from: "bot" });
                 } else {
-                    this.this.messages.push({ text: response.reply, from: "bot", isList: false });
+                    this.messages.push({ text: response.reply || "Sorry, I didn't understand that.", from: "bot" });
                 }
             } catch (error) {
                 console.error("Error sending message to chatbot: ", error);
