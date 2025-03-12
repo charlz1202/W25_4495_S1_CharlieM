@@ -3,3 +3,7 @@ gunicorn
 pymongo
 python-dotenv
 flask_cors
+flask_mail
+flask_apscheduler
+werkzeug
+jwt
