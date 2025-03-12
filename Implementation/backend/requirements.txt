@@ -7,3 +7,4 @@ flask_mail
 flask_apscheduler
 werkzeug
 jwt
+requests
