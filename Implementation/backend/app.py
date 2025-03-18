@@ -410,7 +410,7 @@ if __name__ == "__main__":
     env = os.environ.get("FLASK_ENV", "development")  # Default to 'development' if not set
     debug_mode = env == "development"  # Enable debug only in development
 
-    port = int(os.environ.get("PORT", 5000))  # Default to 5000 for local, Railway assigns dynamic port
+    port = int(os.environ.get("PORT", 8080))  # Default to 5000 for local, Railway assigns dynamic port
     host = "localhost" if debug_mode else "0.0.0.0"  # Bind to localhost for local, 0.0.0.0 for production
 
     print(f"Running in {env} mode on {host}:{port} (Debug: {debug_mode})")
