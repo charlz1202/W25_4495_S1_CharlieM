@@ -16,16 +16,17 @@ from flask_apscheduler import APScheduler
 # Initialize scheduler
 scheduler = APScheduler()
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (development)
+if os.getenv("FLASK_ENV") != "production":
+    load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
 
 
 # Apply CORS to all routes
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
     
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")

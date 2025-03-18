@@ -1,16 +1,19 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://furbot-production.up.railway.app'  // Railway backend URL
+  : 'http://127.0.0.1:5000';  // Local backend for development
+
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 5173, // Your frontend will run on this port
+    port: 5173, // frontend will run on this port
     proxy: {
       '/api': { 
-        target: 'http://localhost:5000', // Your Flask backend
-        changeOrigin: true,
-        secure: false, // Use this if calling an HTTPS backend
-        rewrite: (path) => path.replace(/^\/api/, ''), // Removes '/api' prefix before sending the request
+        target: API_URL, // Flask backend
+        changeOrigin: true, // Virtual hosted sites
+        rewrite: (path) => path.replace(/^\/api/, ''), // Remove /api from the request
       }
     }
   },
