@@ -7,6 +7,7 @@ const API_URL = process.env.NODE_ENV === 'production'
 
 export default defineConfig({
   plugins: [vue()],
+  base: "/",  // Ensures correct routing in production
   server: {
     port: 5173, // local frontend will run on this port
     proxy: {
