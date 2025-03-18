@@ -5,39 +5,28 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import requests
 from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
+import jwt 
 import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 
-from yelp_service import search_yelp
 
 # Initialize scheduler
 scheduler = APScheduler()
 
-# Load environment variables from .env
+# Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
 
 
+# Apply CORS to all routes
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-# Allow CORS for all domains on all routes
-CORS(app, resources={r"/*": {"origins": "*"}},supports_credentials=True)
-
-# Handle preflight requests
-@app.before_request
-def handle_options_request():
-    if request.method == "OPTIONS":
-        response = jsonify({"message": "CORS preflight passed"})
-        response.status_code = 200
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        return response
-
+    
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
@@ -48,6 +37,46 @@ users = db["users"]  # Users collection
 pets = db["pets"] # Pets collection
 reminders = db["reminders"] # Reminders collection
 
+# Load Yelp API Key
+YELP_API_KEY = os.getenv("YELP_API_KEY")
+
+# --------------------------------
+# Config: Flask-Mail Configuration
+# --------------------------------
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
+app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL").lower() == "true"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
+
+mail = Mail(app)
+
+def send_email(to_email, subject, body):
+    msg = Message(subject, recipients=[to_email])
+    msg.body = body
+    mail.send(msg)
+
+
+# ------------------------------
+# API: Yelp Search  
+# ------------------------------
+@app.route("/api/yelp/search", methods=["GET"])
+def yelp_search():
+    location = request.args.get("location")
+    term = request.args.get("term")
+    category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting")
+
+    headers = {
+        "Authorization": f"Bearer {YELP_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    url = f"https://api.yelp.com/v3/businesses/search?term={term}&location={location}&categories={category}"
+
+    response = requests.get(url, headers=headers)
+    return response.json() if response.status_code == 200 else {"error": "Failed to fetch Yelp data"}
+
+    
 # ------------------------------
 # API: Add a Reminder
 # ------------------------------
@@ -252,24 +281,6 @@ def add_pet():
     return jsonify({"message": "Pet added successfully", "pet_id": str(pet_id)}), 201
 
 
-# --------------------------------
-# Config: Flask-Mail Configuration
-# --------------------------------
-app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
-app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
-app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL").lower() == "true"
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
-
-mail = Mail(app)
-
-def send_email(to_email, subject, body):
-    msg = Message(subject, recipients=[to_email])
-    msg.body = body
-    mail.send(msg)
-
-
 
 # ------------------------------
 # API: Get all pets of an owner
@@ -349,21 +360,28 @@ def register():
 # ------------------------------
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.json
-    user = users.find_one({"email": data["email"]})
+    try:
+        data = request.get_json()
+        if not data or "email" not in data or "password" not in data:
+            return jsonify({"error": "Invalid request, missing email or password"}), 400
+        
+        user = users.find_one({"email": data["email"]})
 
-    # Verify password
-    if user and check_password_hash(user["password"], data["password"]):
-        # Generate a JWT token (valid for 1 hour)
+
+        # Verify password
+        if not check_password_hash(user["password"], data["password"]):
+            return jsonify({"error": "Invalid credentials"}), 401  
+            # Generate a JWT token (valid for 1 hour)
         token = jwt.encode(
             {"email": data["email"], "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)},
-            app.config["SECRET_KEY"],
-            algorithm="HS256",
-        )
+               app.config["SECRET_KEY"],
+               algorithm="HS256",
+            )
         return jsonify({"token": token, "user_id": str(user["_id"])}), 200  # Return token to client
 
-    return jsonify({"error": "Invalid credentials"}), 401
-
+    except Exception as e:
+        print("Login error:", str(e))  # Log error
+        return jsonify({"error": "Server error"}), 500
 
 # ------------------------------
 # API: Chatbot  
@@ -384,20 +402,7 @@ def chatbot():
 
    
 # ------------------------------
-# API: Yelp Search  
-# ------------------------------
-@app.route("/api/yelp/search", methods=["GET"])
-
-def yelp_search():
-    location = request.args.get("location")
-    term = request.args.get("term")
-    category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting")
-
-    result = search_yelp(term, location, category)
-    return jsonify(result)
-
-# ------------------------------
 # Run Flask App
 # ------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="localhost", port=5000, debug=True)

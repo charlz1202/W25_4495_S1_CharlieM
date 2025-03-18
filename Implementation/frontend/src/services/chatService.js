@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = "http://127.0.0.1:5000"; // Flask API
 
 export  const sendMessageToChatbot = async (message) => {
     try {
@@ -11,6 +11,8 @@ export  const sendMessageToChatbot = async (message) => {
         }
     
         const lowerMessage = message.toLowerCase();
+
+        console.log("Message received:", lowerMessage);
 
         // Pet Service Detection
         if(lowerMessage.includes("find") || lowerMessage.includes("search") || lowerMessage.includes("nearest")) {
@@ -52,7 +54,7 @@ export  const sendMessageToChatbot = async (message) => {
 
             // Call Yelp API for Pet Services
             const response = await axios.get(`${API_URL}/api/yelp/search`, {
-                params:{term: searchTerm, location: location, categories: category}
+                params:{term: searchTerm, location: location, category: category}
             });
 
             if(!response.data || !response.data.businesses || response.data.businesses.length === 0) {

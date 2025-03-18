@@ -1,19 +1,19 @@
 import axios from "axios";
 
-const API_URL = 'http://127.0.0.1:5000'; // Flask API
+const API_URL = "http://127.0.0.1:5000"; // Flask API
 
-export const addReminder = async (ownerId, petId,date,type,notes) => {
+export const addReminder = async (ownerId, petId, date, type, notes) => {
     try {
         const token = localStorage.getItem("token");
-        const payload = {
-            owner_id: ownerId,  
-            pet_id: petId,
-            date: date,
-            type: type,
-            notes: notes,
-        };
-        
-        console.log("Sending Reminder: ", JSON.stringify(payload, null, 2));
+        if (!token) throw new Error("User not authenticated. Please log in.");
+        if (!ownerId || !petId || !date) throw new Error("Missing required fields for reminder.");
+
+        // Fix date YYYY-MM-DD format
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(date)) throw new Error("Invalid date format. Use YYYY-MM-DD.");
+
+        const payload = { owner_id: ownerId, pet_id: petId, date, type, notes };
+        console.log("Sending Reminder:", JSON.stringify(payload, null, 2));
 
         const response = await axios.post(`${API_URL}/reminders`, payload, {
             headers: {
@@ -25,10 +25,9 @@ export const addReminder = async (ownerId, petId,date,type,notes) => {
         console.log("Reminder Added:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Add Reminder Error:", error.response?.data || "No Response");
+        console.error("Add Reminder Error:", error);
         throw error.response?.data?.error || "Failed to add reminder";
     }
-    
 };
 
 //Get Reminders for pets
