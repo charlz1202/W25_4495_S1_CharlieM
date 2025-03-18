@@ -21,7 +21,13 @@ if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
+
+# Serve Vue frontend
+@app.route('/')
+@app.route('/<path:path>')
+def serve_vue(path="index.html"):
+    return send_from_directory(app.static_folder, path)
 
 
 # Apply CORS to all routes
@@ -401,13 +407,6 @@ def chatbot():
     else:
         return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
-
-# ------------------------------
-# For testing purposes
-# ------------------------------
-#@app.route("/")
-#def home():
-    #return "FurBot Backend Running Successfully!"
 
    
 # ------------------------------
