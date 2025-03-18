@@ -401,6 +401,15 @@ def chatbot():
     else:
         return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
+
+# ------------------------------
+# For testing purposes
+# ------------------------------
+@app.route("/")
+def home():
+    return "FurBot Backend Running Successfully!"
+
+
    
 # ------------------------------
 # Run Flask App
