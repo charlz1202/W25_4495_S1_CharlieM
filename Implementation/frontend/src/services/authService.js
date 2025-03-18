@@ -2,7 +2,9 @@
 
 import axios from 'axios';
 
-const API_URL = "/api"; // Flask API
+const API_URL = import.meta.env.PROD
+  ? "https://furbot-production.up.railway.app"  // Production
+  : "/api";  // Local development (proxied to Flask)
 
 // Login function for POST request.
 export const login = async (email, password) => {

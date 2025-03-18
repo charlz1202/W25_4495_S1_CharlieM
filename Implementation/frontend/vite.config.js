@@ -8,13 +8,16 @@ const API_URL = process.env.NODE_ENV === 'production'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 5173, // frontend will run on this port
+    port: 5173, // local frontend will run on this port
     proxy: {
       '/api': { 
         target: API_URL, // Flask backend
         changeOrigin: true, // Virtual hosted sites
-        rewrite: (path) => path.replace(/^\/api/, ''), // Remove /api from the request
+        rewrite: (path) => path.replace(/^\/api/, ""),
       }
     }
   },
-})
+  define: {
+    __API_URL__: JSON.stringify(API_URL), // Makes API_URL available globally
+  },
+});
