@@ -405,10 +405,9 @@ def chatbot():
 # ------------------------------
 # For testing purposes
 # ------------------------------
-@app.route("/")
-def home():
-    return "FurBot Backend Running Successfully!"
-
+#@app.route("/")
+#def home():
+    #return "FurBot Backend Running Successfully!"
 
    
 # ------------------------------
