@@ -415,7 +415,3 @@ if __name__ == "__main__":
 
     print(f"Running in {env} mode on {host}:{port} (Debug: {debug_mode})")
     app.run(host=host, port=port, debug=debug_mode)
-
-
-#if __name__ == "__main__":
-#    app.run(host="localhost", port=5000, debug=True)
