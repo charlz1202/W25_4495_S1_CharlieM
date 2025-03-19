@@ -31,6 +31,13 @@ def serve_vue(path):
     return send_from_directory(app.static_folder, "index.html")
 
 
+# Detect if running in production
+IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+
+# Use "/api" prefix only in production
+API_PREFIX = "/api" if IS_PRODUCTION else ""
+
+
 # Apply CORS to all routes
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
@@ -366,7 +373,7 @@ def register():
 # ------------------------------
 # User Login API
 # ------------------------------
-@app.route("/login", methods=["POST"])
+@app.route(f"{API_PREFIX}/login", methods=["POST"])
 def login():
     try:
         data = request.get_json()
