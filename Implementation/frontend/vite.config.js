@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://furbot-production.up.railway.app'  // Railway backend URL
-  : 'http://127.0.0.1:5000';  // Local backend for development
+const isProduction = process.env.NODE_ENV === 'production';
+
+const API_URL = isProduction
+  ? "https://furbot-production.up.railway.app"  // Production backend
+  : "http://127.0.0.1:5000";  // Local backend
 
 export default defineConfig({
   plugins: [vue()],
