@@ -1,6 +1,6 @@
 import os
 from sched import scheduler
-from flask import Flask, logging, request, jsonify
+from flask import Flask, logging, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from pymongo import MongoClient
