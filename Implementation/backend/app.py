@@ -21,13 +21,14 @@ if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
 
 # Initialize Flask app
-app = Flask(__name__, static_folder="frontend/dist", static_url_path="")
+app = Flask(__name__, static_folder="../frontend/dist")
 
-# Serve Vue frontend
-@app.route('/')
-@app.route('/<path:path>')
-def serve_vue(path="index.html"):
-    return send_from_directory(app.static_folder, path)
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_vue(path):
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
 
 
 # Apply CORS to all routes
