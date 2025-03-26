@@ -17,7 +17,14 @@ export const sendMessageToChatbot = async (message) => {
         console.log("Message received:", lowerMessage);
 
         // Pet Service Detection
-        if(lowerMessage.includes("find") || lowerMessage.includes("search") || lowerMessage.includes("nearest")) {
+        if(
+            lowerMessage.includes("find") ||
+            lowerMessage.includes("search") ||
+            lowerMessage.includes("nearest") ||
+            lowerMessage.includes("near") ||
+            lowerMessage.includes("nearby") ||
+            lowerMessage.includes("near me")
+          ) {
             let searchTerm="";
             let category = "";
 

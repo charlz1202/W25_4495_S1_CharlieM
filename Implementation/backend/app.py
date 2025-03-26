@@ -1,6 +1,7 @@
 import os
 from sched import scheduler
-from flask import Flask, logging, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
+import logging
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from pymongo import MongoClient
@@ -12,6 +13,7 @@ import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 
+logging.basicConfig(level=logging.INFO)
 
 # Initialize scheduler
 scheduler = APScheduler()
@@ -200,9 +202,11 @@ def delete_reminder(reminder_id):
 # -------------------------------------
 def check_reminders():
     today = datetime.datetime.now(datetime.timezone.utc).date()
+    print("🚀 Running check_reminders for:", today)
     
     # Fetch reminders for today
     reminders_list = list(reminders.find({"date": str(today), "status": "Pending"}))
+    print("📌 Reminders found:", len(reminders_list))
 
     if not reminders_list:
         logging.info("No reminders for today")
@@ -251,10 +255,10 @@ scheduler.start()
 # ------------------------------
 # API: Manual Test email
 # ------------------------------
-@app.route("/test_email", methods=["POST"])
-def test_email():
-    send_email("cm44228@gmail.com", "Test Email", "This is a test email from Furbot") 
-    return jsonify({"message": "Test email sent successfully"}), 200    # Return success message
+@app.route("/run_scheduler_now", methods=["POST"])
+def run_scheduler_now():
+    check_reminders()
+    return jsonify({"message": "Reminder job executed manually."}), 200
 
 
 # ------------------------------
@@ -409,6 +413,8 @@ def chatbot():
 
 # Simple chatbot logic
     if "hello" in user_message:
+        return jsonify({"reply": "Hello! How can I help you today?"})
+    elif "hi" in user_message:
         return jsonify({"reply": "Hello! How can I help you today?"})
     elif "help" in user_message:
         return jsonify({"reply": "I can help you find pet-related services. Try typing 'Find dog groomers'!"})

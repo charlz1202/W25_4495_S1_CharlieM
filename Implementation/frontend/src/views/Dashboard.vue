@@ -1,18 +1,40 @@
 <template>
-    <div class="dashboard-container">
-        <h1 class="dashboard-title">Welcome to FurBot</h1>
+  <div class="dashboard-wrapper">
+    <!-- Left: Pet Profile & Reminders -->
+    <div class="support-panel">
+      <h1 class="dashboard-title">Welcome to FurBot 🐾</h1>
+      <p class="subtitle">Your friendly pet assistant is ready to help!</p>
 
-        <!-- Pet List -->
-        <PetList />
-            
-        <!-- Reminders -->
-        <h2 class="section-title">Upcoming Reminders</h2>
-        <ReminderList />
+      <!-- Pet List Section -->
+      <div class="card-section">
+        <button class="section-toggle" @click="showPets = !showPets">
+          🐶 My Pet List
+        </button>
+        <transition name="fade">
+          <div v-if="showPets" class="section-content">
+            <PetList />
+          </div>
+        </transition>
+      </div>
 
-        <!-- Chatbot -->
-        <Chatbot />
-        
-        </div>
+      <!-- Reminders Section -->
+      <div class="card-section">
+        <button class="section-toggle" @click="showReminders = !showReminders">
+          📅 Upcoming Reminders
+        </button>
+        <transition name="fade">
+          <div v-if="showReminders" class="section-content">
+            <ReminderList />
+          </div>
+        </transition>
+      </div>
+    </div>
+
+    <!-- Right: Chatbot Section -->
+    <div class="chatbot-wrapper">
+    <Chatbot :alwaysOpen="true" />
+  </div>
+  </div>
 </template>
 
 <script>
@@ -22,116 +44,101 @@ import ReminderList from "../components/ReminderList.vue";
 
 export default {
   components: {
+    Chatbot,
     PetList,
     ReminderList,
-    Chatbot,
   },
-};  
+  data() {
+    return {
+      showPets: true,
+      showReminders: true,
+    };
+  },
+};
 </script>
 
 <style scoped>
-/* Dashboard  */
-.dashboard-container {
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-/* Titles */
-.dashboard-title {
-  font-size: 35px;
-  margin-bottom: 35px;
-    color: #fdd835;
-}
-
-.section-title {
-  font-size: 22px;
-  margin-top: 30px;
-  color: #fdd835;
-}
-
-/* Pet List */
-.pet-list {
+.dashboard-wrapper {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
+  gap: 40px;
+  padding: 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+  background-color: #f0fdf4;
+  box-sizing: border-box;
+  min-height: 100vh;
 }
 
-/* Pet Cards */
-.pet-card {
-  background: #333;
-  padding: 15px;
-  border-radius: 10px;
-  width: 250px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+.chatbot-panel {
+  flex: 1.2;
+  background: #fff8e1;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.pet-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: 10px;
+.chatbot-wrapper {
+  background-color: #98ac9e; 
+  padding: 20px;
+  display: flex;
+  justify-content: center;  
+  align-items: start;      
+  height: 100%;           
 }
 
-.pet-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: white;
-}
-
-/* Buttons */
-.view-btn {
-  display: inline-block;
-  background: #007bff;
-  color: white;
-  text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  margin-top: 10px;
-}
-
-.view-btn:hover {
-  background: #0056b3;
-}
-
-/* Reminders */
-.reminder-list {
+.support-panel {
+  flex: 1.8;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-.reminder-card {
-  background: #444;
-  padding: 10px;
-  border-radius: 8px;
-  width: 80%;
+.dashboard-title {
+  font-size: 34px;
+  color: #2e7d32;
   margin-bottom: 10px;
 }
 
-.no-reminders {
-  color: #f00;
+.subtitle {
+  font-size: 16px;
+  color: #4caf50;
+  margin-bottom: 25px;
 }
 
-/* Chatbot */
-.chatbot-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #ff9800;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.card-section {
+  margin-top: 20px;
+}
+
+.section-toggle {
+  background-color: #aed581;
+  color: #2e7d32;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 12px;
   cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 
-.chatbot-icon {
-  width: 30px;
-  height: 30px;
+.section-toggle:hover {
+  background-color: #9ccc65;
+}
+
+.section-content {
+  margin-top: 10px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 100, 0, 0.08);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
