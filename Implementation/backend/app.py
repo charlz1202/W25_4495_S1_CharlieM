@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt 
+import pytz
 import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
@@ -201,7 +202,8 @@ def delete_reminder(reminder_id):
 # JOB: Scheduler for upcoming reminders
 # -------------------------------------
 def check_reminders():
-    today = datetime.datetime.now(datetime.timezone.utc).date()
+    vancouver_tz = pytz.timezone("America/Vancouver")
+    today = datetime.datetime.now(vancouver_tz).date()
     print("🚀 Running check_reminders for:", today)
     
     # Fetch reminders for today
@@ -247,18 +249,18 @@ def check_reminders():
         reminders.update_one({"_id": reminder["_id"]}, {"$set": {"status": "Completed"}})
         logging.info("Reminder status updated to Completed")
 
-# Schedule the job to run every day at 12:00 AM
-scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", hour=0, minute=0)
+# Schedule the job to run every day at 12:00 AM 
+scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") 
 scheduler.start()
 
 
 # ------------------------------
 # API: Manual Test email
 # ------------------------------
-@app.route("/run_scheduler_now", methods=["POST"])
-def run_scheduler_now():
-    check_reminders()
-    return jsonify({"message": "Reminder job executed manually."}), 200
+#@app.route("/run_scheduler_now", methods=["POST"])
+#def run_scheduler_now():
+#    check_reminders()
+#    return jsonify({"message": "Reminder job executed manually."}), 200
 
 
 # ------------------------------
@@ -433,6 +435,9 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 8080))  # Default to 5000 for local, Railway assigns dynamic port
     host = "localhost" if debug_mode else "0.0.0.0"  # Bind to localhost for local, 0.0.0.0 for production
+
+    with app.app_context():
+        check_reminders()  # Run the reminder job once on startup for testing
 
     print(f"Running in {env} mode on {host}:{port} (Debug: {debug_mode})")
     app.run(host=host, port=port, debug=debug_mode)
