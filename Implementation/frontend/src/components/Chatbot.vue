@@ -6,18 +6,35 @@
     </div>
 
     <div class="chat-messages">
-      <div v-for="(message, index) in messages" :key="index" :class="['message', message.from]">
-        <p v-if="typeof message.text === 'string'">{{ message.text }}</p>
+      <div
+        v-for="(message, index) in messages"
+        :key="index"
+        :class="['message', message.from, { 'loading-msg': message.loading }]"
+      >
+      
+      <p v-if="typeof message.text === 'string'" v-html="message.text"></p>
 
         <!-- Yelp Business List Format -->
-        <ul v-else-if="Array.isArray(message.text)" class="business-list">
-          <li v-for="(business, i) in message.text" :key="i" class="business-item">
+        <ul
+          v-else-if="Array.isArray(message.text)"
+          class="business-list"
+        >
+          <li
+            v-for="(business, i) in message.text"
+            :key="i"
+            class="business-item"
+          >
             <div class="business-header">
               🏥 <strong>{{ business.name }}</strong>
             </div>
             <div class="business-details">
-              <span v-if="business.rating !== 'N/A'">⭐ <strong>Rating:</strong> {{ business.rating }}</span><br />
-              <span v-if="business.address !== 'No address available'">📍 <strong>Address:</strong> {{ business.address }}</span>
+              <span v-if="business.rating !== 'N/A'">
+                ⭐ <strong>Rating:</strong> {{ business.rating }}
+              </span>
+              <br />
+              <span v-if="business.address !== 'No address available'">
+                📍 <strong>Address:</strong> {{ business.address }}
+              </span>
             </div>
           </li>
         </ul>
@@ -28,7 +45,11 @@
 
     <!-- Input Area -->
     <div class="chat-input">
-      <input v-model="newMessage" placeholder="Ask FurBot..." @keyup.enter="sendMessage" />
+      <input
+        v-model="newMessage"
+        placeholder="Ask FurBot..."
+        @keyup.enter="sendMessage"
+      />
       <button @click="sendMessage" class="send-btn">Send</button>
     </div>
   </div>
@@ -40,7 +61,10 @@ import { sendMessageToChatbot } from "../services/chatService.js";
 export default {
   data() {
     return {
-      messages: [{ text: "Hi! How can I help you today?", from: "bot" }],
+      messages: [{
+        text: "👋 Hi! I'm FurBot — I can help with pet travel, finding vets & groomers.\n\nTry asking:\n• How to bring my dog to Canada?\n• What airlines allow dogs?\n• Find groomers near me",
+        from: "bot"
+  }],
       newMessage: "",
     };
   },
@@ -48,13 +72,24 @@ export default {
     async sendMessage() {
       if (!this.newMessage.trim()) return;
 
-      this.messages.push({ text: this.newMessage, from: "user" });
+      const userText = this.newMessage;
+      this.messages.push({ text: userText, from: "user" });
+      this.$nextTick(() => this.scrollToBottom());
+
+      // Add "typing..." message while waiting for response
+      const typingMsg = { text: "FurBot is typing...", from: "bot", loading: true };
+      this.messages.push(typingMsg);
+      this.$nextTick(() => this.scrollToBottom());
 
       try {
-        const response = await sendMessageToChatbot(this.newMessage);
+        const response = await sendMessageToChatbot(userText);
+
+        // Remove "typing..." before adding real reply
+        this.messages = this.messages.filter(msg => !msg.loading);
 
         if (!response || typeof response !== "object" || !("reply" in response)) {
           this.messages.push({ text: "Sorry, I didn't understand that.", from: "bot" });
+          this.$nextTick(() => this.scrollToBottom());
           return;
         }
 
@@ -66,14 +101,29 @@ export default {
           }));
           this.messages.push({ text: formatted, from: "bot" });
         } else {
-          this.messages.push({ text: response.reply || "Sorry, I didn't understand that.", from: "bot" });
+          this.messages.push({
+            text: response.reply || "Sorry, I didn't understand that.",
+            from: "bot",
+          });
         }
+        this.$nextTick(() => this.scrollToBottom());
       } catch (error) {
         console.error("Error sending message to chatbot:", error);
+        this.messages = this.messages.filter(msg => !msg.loading);
         this.messages.push({ text: "Sorry, I didn't understand that.", from: "bot" });
+        this.$nextTick(() => this.scrollToBottom());
       }
 
       this.newMessage = "";
+    },
+
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const container = this.$el.querySelector(".chat-messages");
+        if (container) {
+                    container.scrollTop = container.scrollHeight + 1000;
+        }
+      });
     },
   },
 };
@@ -93,7 +143,7 @@ export default {
 .chatbot-embedded {
   width: 100%;
   max-width: 380px;
-  height: 850px;        
+  height: 850px;
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -111,16 +161,22 @@ export default {
 }
 
 .chat-messages {
+  height: 600px;
   flex: 1;
   overflow-y: auto;
   padding: 10px;
-  font-size: 12px;
+  font-size: 13px;
+  max-height: 100%;
 }
 
 .message {
   padding: 10px;
   margin: 6px 0;
   border-radius: 5px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .user {
@@ -133,6 +189,11 @@ export default {
   background: #f0f0f0;
   color: #333;
   align-self: flex-start;
+}
+
+.loading-msg {
+  font-style: italic;
+  color: #777;
 }
 
 .chat-input {
@@ -168,7 +229,7 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  align-items: center; 
+  align-items: center;
 }
 
 .business-item {
@@ -180,7 +241,7 @@ export default {
   font-size: 13px;
   display: flex;
   flex-direction: column;
-  width: 90%; 
+  width: 90%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

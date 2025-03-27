@@ -13,6 +13,7 @@ import pytz
 import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
+from fuzzywuzzy import fuzz # This is for string matching algotrithm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -421,9 +422,22 @@ def chatbot():
     elif "help" in user_message:
         return jsonify({"reply": "I can help you find pet-related services. Try typing 'Find dog groomers'!"})
     else:
-        return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
+        # Additional logic using string matching via Fuzzywuzzy
+        intents = list(db["intents"].find({}))
+        best_score = 0
+        best_intent = None
 
+        for intent in intents:
+            for example in intent.get("examples", []):
+                score = fuzz.ratio(user_message, example.lower())
+                if score > best_score:
+                    best_score = score
+                    best_response = intent["response"]
 
+        if best_response:
+            return jsonify({"reply": best_response})
+        else:
+            return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
    
 # ------------------------------
 # Run Flask App
