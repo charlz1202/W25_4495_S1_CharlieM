@@ -44,7 +44,7 @@ API_PREFIX = "/api" if IS_PRODUCTION else ""
 
 # Apply CORS to all routes
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
+CORS(app, origins=allowed_origins, supports_credentials=True)
     
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
