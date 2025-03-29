@@ -1,8 +1,6 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.PROD
-  ? "https://furbot-production.up.railway.app"  // Production
-  : "/api";  // Local development (proxied to Flask)
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const addReminder = async (ownerId, petId, date, type, notes) => {
     try {

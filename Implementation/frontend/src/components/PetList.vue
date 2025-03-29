@@ -141,7 +141,6 @@
         const lower = species.toLowerCase();
         if (lower.includes("dog")) return "🐶";
         if (lower.includes("cat")) return "🐱";
-        if (lower.includes("bird")) return "🐦";
         return "🐾";
       },
     },
