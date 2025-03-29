@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO)
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/dist")
 
+# Initialize APScheduler
 scheduler = APScheduler()
 scheduler.init_app(app)
 
@@ -33,7 +34,7 @@ API_PREFIX = "/api" if IS_PRODUCTION else ""
 
 # Apply CORS — do this **immediately after app = Flask(...)**
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-CORS(app, resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}})
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 
 # Serve frontend
 @app.route("/", defaults={"path": ""})
