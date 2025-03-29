@@ -20,6 +20,7 @@ if os.getenv("FLASK_ENV") != "production":
 
 print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("✅ Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
+print("🛠 REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
