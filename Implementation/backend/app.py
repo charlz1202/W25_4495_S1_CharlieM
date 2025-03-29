@@ -18,6 +18,9 @@ from fuzzywuzzy import fuzz  # This is for string matching algorithm
 if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
 
+print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
+print("✅ Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
