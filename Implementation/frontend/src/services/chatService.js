@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const sendMessageToChatbot = async (message) => {
     try {
@@ -60,7 +60,7 @@ export const sendMessageToChatbot = async (message) => {
             const location = "New Westminster, BC";
 
             // Call Yelp API for Pet Services
-            const response = await axios.get(`${API_URL}/api/yelp/search`, {
+            const response = await axios.get(`${API_URL}/yelp/search`, {
                 params:{term: searchTerm, location: location, category: category}
             });
 
@@ -79,7 +79,7 @@ export const sendMessageToChatbot = async (message) => {
         }
 
         // Default Chatbot Response
-        const chatbotResponse = await axios.post(`${API_URL}/api/chatbot`, {message});
+        const chatbotResponse = await axios.post(`${API_URL}/chatbot`, {message});
         
         return chatbotResponse.data && chatbotResponse.data.reply
             ? chatbotResponse.data

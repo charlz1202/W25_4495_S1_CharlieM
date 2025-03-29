@@ -1,6 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-card">
+      <img src="/logo.jpg" alt="FurBot Logo" class="logo" />
       <h1 class="title">Welcome Back to FurBot 🐾</h1>
       <form @submit.prevent="handleLogin" class="login-form">
         <input v-model="email" type="email" placeholder="Email" required />
@@ -39,13 +40,12 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #e8f5e9;
-  padding: 20px;
+
+.logo {
+  width: 100px;
+  max-width: 80%;
+  display: block;
+  margin: 0 auto 20px auto;
 }
 
 .login-card {

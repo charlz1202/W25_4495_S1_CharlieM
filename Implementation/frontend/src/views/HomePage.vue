@@ -2,7 +2,6 @@
     <div class="home-container">
       <div class="card">
         <img src="/logo.jpg" alt="FurBot Logo" class="logo" />
-        <h1 class="brand">FurBot</h1>
         <p class="tagline">Your friendly pet assistant</p>
   
         <nav class="nav-links">
@@ -35,16 +34,9 @@
   .logo {
     width: 100px;
     height: 100px;
-    border-radius: 50%;
+    border-radius: 20%;
     object-fit: cover;
     margin-bottom: 12px;
-  }
-  
-  .brand {
-    font-size: 36px;
-    font-weight: bold;
-    color: #2e7d32;
-    margin: 0;
   }
   
   .tagline {

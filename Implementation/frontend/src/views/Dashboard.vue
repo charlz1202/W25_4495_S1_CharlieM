@@ -1,8 +1,26 @@
 <template>
+
+   <!-- Logout Button -->
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+      <button @click="handleLogout" style="
+        background-color: #ef5350;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+      ">
+        Logout
+      </button>
+    </div>
+
   <div class="dashboard-wrapper">
     <!-- Left: Pet Profile & Reminders -->
     <div class="support-panel">
-      <h1 class="dashboard-title">Welcome to FurBot 🐾</h1>
+      <img src="/logo.jpg" alt="FurBot Logo" class="dashboard-logo" />
+
+      <h1 class="dashboard-title">Welcome to FurBot</h1>
       <p class="subtitle">Your friendly pet assistant is ready to help!</p>
 
       <!-- Pet List Section -->
@@ -41,6 +59,7 @@
 import Chatbot from "../components/Chatbot.vue";
 import PetList from "../components/PetList.vue";
 import ReminderList from "../components/ReminderList.vue";
+import { logout } from "../services/authService";
 
 export default {
   components: {
@@ -53,6 +72,23 @@ export default {
       showPets: true,
       showReminders: true,
     };
+  },
+  methods: {
+    async handleLogout() {
+      try {
+        await logout();
+        this.$router.push("/login");
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    },
+  },
+  mounted() {
+    // Check if user is logged in, if not redirect to login page
+    const token = localStorage.getItem("token");
+    if (!token) {
+      this.$router.push("/login");
+    }
   },
 };
 </script>
@@ -67,6 +103,12 @@ export default {
   background-color: #f0fdf4;
   box-sizing: border-box;
   min-height: 100vh;
+}
+
+.dashboard-logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 20px;
 }
 
 .chatbot-panel {

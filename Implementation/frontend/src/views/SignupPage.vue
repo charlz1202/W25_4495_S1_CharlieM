@@ -35,16 +35,20 @@ export default {
     return {
       email: "",
       password: "",
+      errorMessage: "",
     };
   },
   methods: {
     async handleSignup() {
       try {
         const response = await signup(this.email, this.password);
-        alert(response.message);
+
+        alert(response.message || "Signup successful!");
+
         this.$router.push("/login");
       } catch (error) {
-        this.errorMessage = error;
+        this.errorMessage = error.message || "An error occurred during signup.";
+        alert(this.errorMessage);
       }
     },
   },

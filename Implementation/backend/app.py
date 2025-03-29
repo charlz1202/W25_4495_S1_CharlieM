@@ -1,5 +1,4 @@
 import os
-from sched import scheduler
 from flask import Flask, request, jsonify, send_from_directory
 import logging
 from flask_cors import CORS
@@ -15,33 +14,34 @@ from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 from fuzzywuzzy import fuzz  # This is for string matching algorithm
 
-logging.basicConfig(level=logging.INFO)
-
-# Initialize scheduler
-scheduler = APScheduler()
-
-# Load environment variables (development)
+# Load environment variables early
 if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/dist")
 
+scheduler = APScheduler()
+scheduler.init_app(app)
+
+# Environment flags
+IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+API_PREFIX = "/api" if IS_PRODUCTION else ""
+
+# Apply CORS — do this **immediately after app = Flask(...)**
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+CORS(app, resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}})
+
+# Serve frontend
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
-
-# Detect if running in production
-IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
-
-# Use "/api" prefix only in production; otherwise, leave blank for local development.
-API_PREFIX = "/api" if IS_PRODUCTION else ""
-
-# Apply CORS to all routes
-CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(","), "supports_credentials": True}})
 
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -242,10 +242,10 @@ def check_reminders():
 
 # Schedule the job to run every day at 12:00 AM 
 scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") 
-scheduler.start()
+# scheduler.start()
 
 # ------------------------------
-# API: Manual Test email (Optional)
+# API: Manual Test email
 # ------------------------------
 # @app.route(f"{API_PREFIX}/run_scheduler_now", methods=["POST"])
 # def run_scheduler_now():
