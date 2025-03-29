@@ -41,10 +41,16 @@ print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 # Apply CORS — do this **immediately after app = Flask(...)**
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 CORS(app,
-     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
+     resources={r"/api/*": {"origins": allowed_origins}},
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
+
+#CORS(app,
+#     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
+#     supports_credentials=True,
+#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#     allow_headers=["Content-Type", "Authorization"])
 
 
 
