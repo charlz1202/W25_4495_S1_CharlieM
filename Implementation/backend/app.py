@@ -21,6 +21,15 @@ if os.getenv("FLASK_ENV") != "production":
 print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("✅ Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 
+# Environment flags
+IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+API_PREFIX = "/api" if IS_PRODUCTION else ""
+
+print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
+print("✅ IS_PRODUCTION?", IS_PRODUCTION)
+print("✅ API_PREFIX:", API_PREFIX)
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -31,9 +40,7 @@ app = Flask(__name__, static_folder="../frontend/dist")
 scheduler = APScheduler()
 scheduler.init_app(app)
 
-# Environment flags
-IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
-API_PREFIX = "/api" if IS_PRODUCTION else ""
+
 
 # Apply CORS — do this **immediately after app = Flask(...)**
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
@@ -427,7 +434,7 @@ def test_cors():
     return jsonify({
         "status": "working",
         "env": os.getenv("FLASK_ENV"),
-        "api_prefix": API_PREFIX
+        "prefix": API_PREFIX
     })
 
 
