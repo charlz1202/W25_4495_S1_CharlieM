@@ -26,11 +26,11 @@ logging.basicConfig(level=logging.INFO)
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/dist")
 
-CORS(app,
-     origins=["https://furbot.netlify.app"],
-     supports_credentials=True,
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"])
+#CORS(app,
+#     origins=["https://furbot.netlify.app"],
+#     supports_credentials=True,
+#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#     allow_headers=["Content-Type", "Authorization"])
 
 # Initialize APScheduler
 scheduler = APScheduler()
@@ -45,13 +45,12 @@ print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
 # Apply CORS — do this **immediately after app = Flask(...)**
-#allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-#CORS(app,
-#     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
-#     supports_credentials=True,
-#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-#     allow_headers=["Content-Type", "Authorization"])
-
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+CORS(app,
+     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
 
 # Serve frontend
@@ -432,7 +431,7 @@ def chatbot():
 # Testing CORS
 # ------------------------------
 
-@app.route(f"{API_PREFIX}/test-cors", methods=["GET"])
+@app.route("api/test-cors", methods=["GET"])
 def test_cors():
     return jsonify({
         "status": "working",
