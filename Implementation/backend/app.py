@@ -26,6 +26,12 @@ logging.basicConfig(level=logging.INFO)
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/dist")
 
+CORS(app,
+     origins=["https://furbot.netlify.app"],
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
+
 # Initialize APScheduler
 scheduler = APScheduler()
 scheduler.init_app(app)
@@ -39,12 +45,12 @@ print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
 # Apply CORS — do this **immediately after app = Flask(...)**
-allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-CORS(app,
-     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
-     supports_credentials=True,
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"])
+#allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+#CORS(app,
+#     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
+#     supports_credentials=True,
+#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#     allow_headers=["Content-Type", "Authorization"])
 
 
 
@@ -443,7 +449,7 @@ with app.app_context():
     print("\n✅ REGISTERED ROUTES:")
     for rule in app.url_map.iter_rules():
         print(f"🔹 {rule}")
-        
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
