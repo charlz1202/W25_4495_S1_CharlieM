@@ -21,15 +21,6 @@ if os.getenv("FLASK_ENV") != "production":
 print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("✅ Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 
-# Environment flags
-IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
-API_PREFIX = "/api" if IS_PRODUCTION else ""
-
-print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
-print("✅ IS_PRODUCTION?", IS_PRODUCTION)
-print("✅ API_PREFIX:", API_PREFIX)
-
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -40,17 +31,19 @@ app = Flask(__name__, static_folder="../frontend/dist")
 scheduler = APScheduler()
 scheduler.init_app(app)
 
-
+# Environment flags
+IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+API_PREFIX = "/api" if IS_PRODUCTION else ""
 
 # Apply CORS — do this **immediately after app = Flask(...)**
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 CORS(app,
-     resources={r"/api/*": {"origins": allowed_origins}},
+     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
 
-# CORS(app, resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}})
+
 
 # Serve frontend
 @app.route("/", defaults={"path": ""})
@@ -425,6 +418,7 @@ def chatbot():
         else:
             return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
+
 # ------------------------------
 # Testing CORS
 # ------------------------------
@@ -434,7 +428,7 @@ def test_cors():
     return jsonify({
         "status": "working",
         "env": os.getenv("FLASK_ENV"),
-        "prefix": API_PREFIX
+        "api_prefix": API_PREFIX
     })
 
 
