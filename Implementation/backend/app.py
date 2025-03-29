@@ -13,7 +13,7 @@ import pytz
 import datetime
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
-from fuzzywuzzy import fuzz # This is for string matching algotrithm
+from fuzzywuzzy import fuzz  # This is for string matching algorithm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,27 +34,25 @@ def serve_vue(path):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
 
-
 # Detect if running in production
 IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
 
-# Use "/api" prefix only in production
+# Use "/api" prefix only in production; otherwise, leave blank for local development.
 API_PREFIX = "/api" if IS_PRODUCTION else ""
 
-
 # Apply CORS to all routes
-allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+# For now, using "*" to temporarily loosen restrictions
 CORS(app, origins="*", supports_credentials=True)
-    
+
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 # Connect to MongoDB
 client = MongoClient(os.getenv("MONGO_URI"))
 db = client["furbot"]  # Database name
-users = db["users"]  # Users collection
-pets = db["pets"] # Pets collection
-reminders = db["reminders"] # Reminders collection
+users = db["users"]    # Users collection
+pets = db["pets"]      # Pets collection
+reminders = db["reminders"]  # Reminders collection
 
 # Load Yelp API Key
 YELP_API_KEY = os.getenv("YELP_API_KEY")
@@ -76,11 +74,10 @@ def send_email(to_email, subject, body):
     msg.body = body
     mail.send(msg)
 
-
 # ------------------------------
 # API: Yelp Search  
 # ------------------------------
-@app.route("/api/yelp/search", methods=["GET"])
+@app.route(f"{API_PREFIX}/yelp/search", methods=["GET"])
 def yelp_search():
     location = request.args.get("location")
     term = request.args.get("term")
@@ -95,23 +92,21 @@ def yelp_search():
     response = requests.get(url, headers=headers)
     return response.json() if response.status_code == 200 else {"error": "Failed to fetch Yelp data"}
 
-    
 # ------------------------------
 # API: Add a Reminder
 # ------------------------------
-@app.route("/reminders", methods=["POST"])
+@app.route(f"{API_PREFIX}/reminders", methods=["POST"])
 def add_reminder():
     data = request.json
 
     # Validate input
     if "owner_id" not in data or "pet_id" not in data or "date" not in data:
         print("Missing required fields", data)
-        return jsonify({"error": "Missing required fields (owner_id), pet_id, date"}), 400
+        return jsonify({"error": "Missing required fields (owner_id, pet_id, date)"}), 400
     
     try:
         owner_obj_id = ObjectId(data["owner_id"])
         pet_obj_id = ObjectId(data["pet_id"])
-
     except Exception as e:
         print("Invalid owner_id or pet_id format", str(e))
         return jsonify({"error": "Invalid owner_id or pet_id format"}), 400
@@ -120,8 +115,8 @@ def add_reminder():
         reminder_id = reminders.insert_one({
             "owner_id": owner_obj_id,
             "pet_id": pet_obj_id,
-            "date": data["date"], #(format: YYYY-MM-DD)
-            "type": data.get("type","Other"),
+            "date": data["date"],  # (format: YYYY-MM-DD)
+            "type": data.get("type", "Other"),
             "notes": data.get("notes", ""),
             "status": "Pending"
         }).inserted_id
@@ -133,11 +128,10 @@ def add_reminder():
         print("Error adding reminder", str(e))
         return jsonify({"error": "Error adding reminder"}), 500
 
-
 # ------------------------------
 # API: Get Reminders for a pet
 # ------------------------------
-@app.route("/reminders/<pet_id>", methods=["GET"])
+@app.route(f"{API_PREFIX}/reminders/<pet_id>", methods=["GET"])
 def get_reminders(pet_id):
     try:
         pet_obj_id = ObjectId(pet_id)  # Validate pet_id format
@@ -153,14 +147,14 @@ def get_reminders(pet_id):
     # Convert ObjectId to string before returning the response
     for reminder in reminders_list:
         reminder["_id"] = str(reminder["_id"])
-        reminder["pet_id"] = str(reminder.get("pet_id","unknown"))
+        reminder["pet_id"] = str(reminder.get("pet_id", "unknown"))
 
     return jsonify(reminders_list), 200
 
 # ------------------------------
 # API: Get All Reminders for an owner
 # ------------------------------
-@app.route("/reminders/owner/<owner_id>", methods=["GET"])
+@app.route(f"{API_PREFIX}/reminders/owner/<owner_id>", methods=["GET"])
 def get_all_reminders(owner_id):
     try:
         owner_obj_id = ObjectId(owner_id)  # Validate owner_id format
@@ -176,18 +170,17 @@ def get_all_reminders(owner_id):
     # Convert ObjectId to string before returning the response
     for reminder in reminders_list:
         reminder["_id"] = str(reminder["_id"])
-        reminder["pet_id"] = str(reminder.get("pet_id","unknown"))  
+        reminder["pet_id"] = str(reminder.get("pet_id", "unknown"))
 
     return jsonify(reminders_list), 200
 
 # ------------------------------
 # API: Delete a Reminder
 # ------------------------------
-@app.route("/reminders/<reminder_id>", methods=["DELETE"])
+@app.route(f"{API_PREFIX}/reminders/<reminder_id>", methods=["DELETE"])
 def delete_reminder(reminder_id):
     try:
         reminder_obj_id = ObjectId(reminder_id)  # Validate reminder_id format
-
     except Exception:
         return jsonify({"error": "Invalid reminder_id format"}), 400
     
@@ -197,7 +190,6 @@ def delete_reminder(reminder_id):
         return jsonify({"error": "Reminder not found"}), 404
     
     return jsonify({"message": "Reminder deleted successfully"}), 200
-
 
 # -------------------------------------
 # JOB: Scheduler for upcoming reminders
@@ -244,7 +236,6 @@ def check_reminders():
         )
 
         send_email(owner["email"], "Furbot Reminder", email_body)
-
             
         # Update reminder status to "Completed"
         reminders.update_one({"_id": reminder["_id"]}, {"$set": {"status": "Completed"}})
@@ -254,32 +245,29 @@ def check_reminders():
 scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") 
 scheduler.start()
 
-
 # ------------------------------
-# API: Manual Test email
+# API: Manual Test email (Optional)
 # ------------------------------
-#@app.route("/run_scheduler_now", methods=["POST"])
-#def run_scheduler_now():
-#    check_reminders()
-#    return jsonify({"message": "Reminder job executed manually."}), 200
-
+# @app.route(f"{API_PREFIX}/run_scheduler_now", methods=["POST"])
+# def run_scheduler_now():
+#     check_reminders()
+#     return jsonify({"message": "Reminder job executed manually."}), 200
 
 # ------------------------------
 # API: Add a new pet
 # ------------------------------
-@app.route("/pets", methods=["POST"]) 
+@app.route(f"{API_PREFIX}/pets", methods=["POST"])
 def add_pet():
     data = request.json
 
     owner_id = str(data.get("owner_id", ""))
 
-    #Validate input
+    # Validate input
     if not owner_id or "name" not in data or "dob" not in data:
-        return jsonify({"error": "Missing required fields (owner_id), name, dob"}), 400
+        return jsonify({"error": "Missing required fields (owner_id, name, dob)"}), 400
     
     try:
-        owner_obj_id = ObjectId(owner_id) # validate owner_id
-
+        owner_obj_id = ObjectId(owner_id)  # validate owner_id
     except Exception:
         return jsonify({"error": "Invalid owner_id format"}), 400
         
@@ -288,12 +276,12 @@ def add_pet():
     if existing_pet:
         return jsonify({"error": "A Pet with this name already exists for the owner"}), 400
         
-    #Insert pet into the database
+    # Insert pet into the database
     pet_id = pets.insert_one({
         "owner_id": owner_obj_id,
         "name": data["name"],
         "species": data.get("species", ""),
-        "dob": data["dob"], #(format: YYYY-MM-DD)
+        "dob": data["dob"],  # (format: YYYY-MM-DD)
         "color": data.get("color", ""),
         "breed": data.get("breed", ""),
         "medical_history": data.get("medical_history", []),
@@ -302,49 +290,40 @@ def add_pet():
 
     return jsonify({"message": "Pet added successfully", "pet_id": str(pet_id)}), 201
 
-
-
 # ------------------------------
 # API: Get all pets of an owner
 # ------------------------------
-@app.route("/pets/<owner_id>", methods=["GET"])
+@app.route(f"{API_PREFIX}/pets/<owner_id>", methods=["GET"])
 def get_pets(owner_id):
     try:
         owner_obj_id = ObjectId(owner_id)  # Validate owner_id format
     except Exception:
         return jsonify({"error": "Invalid owner_id format"}), 400
 
-
-    pets_list = list(pets.find({"owner_id": owner_obj_id}, {"_id": 1, "name": 1, "species": 1, "breed": 1, "dob": 1, "color": 1 ,"medical_history": 1}))
+    pets_list = list(pets.find({"owner_id": owner_obj_id}, {"_id": 1, "name": 1, "species": 1, "breed": 1, "dob": 1, "color": 1, "medical_history": 1}))
 
     if not pets_list:
         return jsonify({"message": "No pets found for the owner"}), 404
         
     # Convert ObjectId to string before returning the response
     today = datetime.date.today()
-
     for pet in pets_list:
         pet["_id"] = str(pet["_id"])
-
         # Calculate the age of the pet
         if "dob" in pet:
             dob = datetime.datetime.strptime(pet["dob"], "%Y-%m-%d").date()
-
             age = today.year - dob.year
             if (today.month, today.day) < (dob.month, dob.day):
-                age -= 1 # Subtract if the birthday hasn't occurred yet
-
+                age -= 1  # Subtract if the birthday hasn't occurred yet
             pet["age"] = age
         else:
             pet["age"] = "Unknown"
-
     return jsonify(pets_list), 200
-
 
 # ------------------------------
 # API: Delete a pet
 # ------------------------------
-@app.route("/pets/<pet_id>", methods=["DELETE"])
+@app.route(f"{API_PREFIX}/pets/<pet_id>", methods=["DELETE"])
 def delete_pet(pet_id):
     try:
         ObjectId(pet_id)  # Validate pet_id format
@@ -359,11 +338,10 @@ def delete_pet(pet_id):
     pets.delete_one({"_id": ObjectId(pet_id)})
     return jsonify({"message": "Pet deleted successfully"}), 200
 
-
 # ------------------------------
-# User Registration API
+# API: User Registration
 # ------------------------------
-@app.route("/register", methods=["POST"])
+@app.route(f"{API_PREFIX}/register", methods=["POST"])
 def register():
     data = request.json
 
@@ -376,9 +354,8 @@ def register():
     users.insert_one({"email": data["email"], "password": hashed_password})
     return jsonify({"message": "User registered successfully!"}), 201
 
-
 # ------------------------------
-# User Login API
+# API: User Login
 # ------------------------------
 @app.route(f"{API_PREFIX}/login", methods=["POST"])
 def login():
@@ -388,36 +365,31 @@ def login():
             return jsonify({"error": "Invalid request, missing email or password"}), 400
         
         user = users.find_one({"email": data["email"]})
-
-
-        # Verify password
-        if not check_password_hash(user["password"], data["password"]):
-            return jsonify({"error": "Invalid credentials"}), 401  
-            # Generate a JWT token (valid for 1 hour)
+        if not user or not check_password_hash(user["password"], data["password"]):
+            return jsonify({"error": "Invalid credentials"}), 401
+        
+        # Generate a JWT token (valid for 1 hour)
         token = jwt.encode(
             {"email": data["email"], "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)},
-               app.config["SECRET_KEY"],
-               algorithm="HS256",
-            )
-        return jsonify({"token": token, "user_id": str(user["_id"])}), 200  # Return token to client
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+        return jsonify({"token": token, "user_id": str(user["_id"])}), 200
 
     except Exception as e:
-        print("Login error:", str(e))  # Log error
+        print("Login error:", str(e))
         return jsonify({"error": "Server error"}), 500
 
 # ------------------------------
 # API: Chatbot  
 # ------------------------------
-@app.route("/api/chatbot", methods=["POST"])
-
+@app.route(f"{API_PREFIX}/chatbot", methods=["POST"])
 def chatbot():
     data = request.json
     user_message = data.get("message", "").lower()
 
-# Simple chatbot logic
-    if "hello" in user_message:
-        return jsonify({"reply": "Hello! How can I help you today?"})
-    elif "hi" in user_message:
+    # Simple chatbot logic
+    if "hello" in user_message or "hi" in user_message:
         return jsonify({"reply": "Hello! How can I help you today?"})
     elif "help" in user_message:
         return jsonify({"reply": "I can help you find pet-related services. Try typing 'Find dog groomers'!"})
@@ -425,24 +397,21 @@ def chatbot():
         # Additional logic using string matching via Fuzzywuzzy
         intents = list(db["intents"].find({}))
         best_score = 0
-        best_intent = None
-
+        best_response = None
         for intent in intents:
             for example in intent.get("examples", []):
                 score = fuzz.ratio(user_message, example.lower())
                 if score > best_score:
                     best_score = score
                     best_response = intent["response"]
-
         if best_response:
             return jsonify({"reply": best_response})
         else:
             return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
-   
+
 # ------------------------------
 # Run Flask App
 # ------------------------------
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
