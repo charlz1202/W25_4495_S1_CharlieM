@@ -416,6 +416,20 @@ def chatbot():
             return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
 # ------------------------------
+# Testing CORS
+# ------------------------------
+
+@app.route(f"{API_PREFIX}/test-cors", methods=["GET"])
+def test_cors():
+    return jsonify({
+        "status": "working",
+        "env": os.getenv("FLASK_ENV"),
+        "api_prefix": API_PREFIX
+    })
+
+
+
+# ------------------------------
 # Run Flask App
 # ------------------------------
 if __name__ == "__main__":
