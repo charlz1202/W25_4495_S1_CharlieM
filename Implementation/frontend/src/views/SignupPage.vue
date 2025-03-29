@@ -56,14 +56,7 @@ export default {
 </script>
 
 <style scoped>
-.signup-wrapper {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(to right, #e0f2f1, #a5d6a7);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+
 
 .signup-container {
   background: white;
