@@ -41,8 +41,7 @@ IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
 API_PREFIX = "/api" if IS_PRODUCTION else ""
 
 # Apply CORS to all routes
-# For now, using "*" to temporarily loosen restrictions
-CORS(app, origins="*", supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(","), "supports_credentials": True}})
 
 # Securely load SECRET_KEY from .env
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
