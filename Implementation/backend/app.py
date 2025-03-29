@@ -18,9 +18,7 @@ from fuzzywuzzy import fuzz  # This is for string matching algorithm
 if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
 
-print("✅ FLASK_ENV:", os.getenv("FLASK_ENV"))
-print("✅ Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
-print("🛠 REGISTERED ROUTE:", f"{API_PREFIX}/login")
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +33,10 @@ scheduler.init_app(app)
 # Environment flags
 IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
 API_PREFIX = "/api" if IS_PRODUCTION else ""
+
+print("FLASK_ENV:", os.getenv("FLASK_ENV"))
+print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
+print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
 # Apply CORS — do this **immediately after app = Flask(...)**
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
