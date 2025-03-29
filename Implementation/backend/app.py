@@ -26,11 +26,6 @@ logging.basicConfig(level=logging.INFO)
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/dist")
 
-#CORS(app,
-#     origins=["https://furbot.netlify.app"],
-#     supports_credentials=True,
-#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-#     allow_headers=["Content-Type", "Authorization"])
 
 # Initialize APScheduler
 scheduler = APScheduler()
@@ -260,7 +255,7 @@ def check_reminders():
 
 # Schedule the job to run every day at 12:00 AM 
 scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") 
-# scheduler.start()
+
 
 # ------------------------------
 # API: Manual Test email
@@ -431,7 +426,7 @@ def chatbot():
 # Testing CORS
 # ------------------------------
 
-@app.route("api/test-cors", methods=["GET"])
+@app.route(f"{API_PREFIX}/test-cors", methods=["GET"])
 def test_cors():
     return jsonify({
         "status": "working",
