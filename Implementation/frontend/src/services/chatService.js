@@ -57,7 +57,7 @@ export const sendMessageToChatbot = async (message) => {
                 category = "petservices,groomer,vet,dog_parks,petstore";
             }
 
-            const location = "New Westminster, BC";
+            const location = "Vancouver, BC"; // Default location
 
             // Call Yelp API for Pet Services
             const response = await axios.get(`${API_URL}/yelp/search`, {

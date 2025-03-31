@@ -39,7 +39,7 @@ print("FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
-# Apply CORS — do this **immediately after app = Flask(...)**
+# Apply CORS
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 CORS(app,
      resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
@@ -369,8 +369,11 @@ def register():
 # ------------------------------
 # API: User Login
 # ------------------------------
-@app.route(f"{API_PREFIX}/login", methods=["POST"])
+@app.route(f"{API_PREFIX}/login", methods=["POST","OPTIONS"])
 def login():
+    if request.method == "OPTIONS":
+        return '', 200 # Handle preflight request
+    
     try:
         data = request.get_json()
         if not data or "email" not in data or "password" not in data:
@@ -406,18 +409,27 @@ def chatbot():
     elif "help" in user_message:
         return jsonify({"reply": "I can help you find pet-related services. Try typing 'Find dog groomers'!"})
     else:
-        # Additional logic using string matching via Fuzzywuzzy
+        # Additional logic using string matching via Fuzzywuzzy compares the user message with the examples in the database and
+        # calculate levenshtein distance to find the best match
         intents = list(db["intents"].find({}))
         best_score = 0
-        best_response = None
+        best_match = None
+
         for intent in intents:
             for example in intent.get("examples", []):
-                score = fuzz.ratio(user_message, example.lower())
+                score = fuzz.token_set_ratio(user_message, example.lower()) # Compares WORD similarity
+                print(f"Comparing with: {example}, Score: {score}")
                 if score > best_score:
                     best_score = score
-                    best_response = intent["response"]
-        if best_response:
-            return jsonify({"reply": best_response})
+                    best_match = intent
+
+        if best_match and best_score >= 60: # Threshold for a good match
+            print("Best Match:", best_match["examples"])
+            print("Matched Intent:", best_match["intent"])
+            return jsonify({
+                "reply": best_match["response"],
+                "link": best_match.get("more_info_link", "")
+            })
         else:
             return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
@@ -440,6 +452,10 @@ def test_cors():
 # Run Flask App
 # ------------------------------
 with app.app_context():
+
+    with app.app_context():
+        check_reminders()  # Run the reminder job once on startup for testing
+    
     print("\n✅ REGISTERED ROUTES:")
     for rule in app.url_map.iter_rules():
         print(f"🔹 {rule}")
@@ -448,5 +464,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
 
-    with app.app_context():
-        check_reminders()  # Run the reminder job once on startup for testing
