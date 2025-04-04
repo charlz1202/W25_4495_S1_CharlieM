@@ -14,16 +14,37 @@ from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 from fuzzywuzzy import fuzz  # This is for string matching algorithm
 
-# Load environment variables early
+
+# Allow fuzzy or alternate names for the reminder types
+# These are the types of reminders we support in the app
+reminder_type_aliases = {
+    "grooming": "Grooming",
+    "groom": "Grooming",
+    "groomin": "Grooming",
+    "haircut": "Grooming",
+    "vaccine": "Vaccination",
+    "vaccination": "Vaccination",
+    "vaccines": "Vaccination",
+    "booster": "Vaccination",
+    "checkup": "Checkup",
+    "dental": "Dental Care"
+}
+
+
+
+# This is to load the .env file in development mode
 if os.getenv("FLASK_ENV") != "production":
     load_dotenv()
 
 
-
-# Configure logging
+# Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize Flask app
+# Initialize Flask app and set static folder for frontend
+# When a user visits your site (like /, /login, /dashboard, etc.):
+# Flask checks ../frontend/dist for a matching file
+# If it finds one, it serves that file (like index.html or app.js).
+# If it doesn't find one, it returns a 404 error.
 app = Flask(__name__, static_folder="../frontend/dist")
 
 
@@ -31,24 +52,28 @@ app = Flask(__name__, static_folder="../frontend/dist")
 scheduler = APScheduler()
 scheduler.init_app(app)
 
-# Environment flags
+# Define API Prefix for production and development
+# In production, the API prefix is "/api" to avoid conflicts with frontend routes
 IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
 API_PREFIX = "/api" if IS_PRODUCTION else ""
 
+# Print environment variables for debugging
 print("FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
 print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 
-# Apply CORS
-allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+# Set CORS for the app 
+# This allows cross-origin requests from specified origins
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",") # Comma-separated list of allowed origins
 CORS(app,
-     resources={r"/*": {"origins": allowed_origins, "supports_credentials": True}},
+     origins=allowed_origins,
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
 
 
-# Serve frontend
+# Serve Vue.js frontend files
+# This is the route that serves the Vue.js frontend files.
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
@@ -56,10 +81,9 @@ def serve_vue(path):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
 
-# Securely load SECRET_KEY from .env
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-# Connect to MongoDB
+# Set up MongoDB connection
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 client = MongoClient(os.getenv("MONGO_URI"))
 db = client["furbot"]  # Database name
 users = db["users"]    # Users collection
@@ -93,7 +117,7 @@ def send_email(to_email, subject, body):
 def yelp_search():
     location = request.args.get("location")
     term = request.args.get("term")
-    category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting")
+    category = request.args.get("category", "petstores,groomer,vets,petservices,petphotography,pet_sitting") # Categories according to Yelp API
 
     headers = {
         "Authorization": f"Bearer {YELP_API_KEY}",
@@ -124,16 +148,29 @@ def add_reminder():
         return jsonify({"error": "Invalid owner_id or pet_id format"}), 400
     
     try: 
+
+         # Normalize the reminder type using aliases on top of this code
+        user_type = data.get("type", "Other").lower()
+        normalized_type = reminder_type_aliases.get(user_type, user_type.title())
+
+
         reminder_id = reminders.insert_one({
             "owner_id": owner_obj_id,
             "pet_id": pet_obj_id,
             "date": data["date"],  # (format: YYYY-MM-DD)
-            "type": data.get("type", "Other"),
+            "type": normalized_type,
             "notes": data.get("notes", ""),
             "status": "Pending"
         }).inserted_id
 
-        print("Reminder added successfully", reminder_id)   
+        print("Reminder added successfully", reminder_id)
+
+        # Update the pet's lastReminders field for the proactive reminder check
+        pets.update_one(
+            {"_id": pet_obj_id},
+            {"$set": {f"lastReminders.{normalized_type}": data["date"]}}
+        )  
+
         return jsonify({"message": "Reminder added successfully", "reminder_id": str(reminder_id)}), 201
 
     except Exception as e:
@@ -196,29 +233,60 @@ def delete_reminder(reminder_id):
     except Exception:
         return jsonify({"error": "Invalid reminder_id format"}), 400
     
+    # Check if reminder exists
+    reminder = reminders.find_one({"_id": reminder_obj_id})
+    if not reminder:
+        return jsonify({"error": "Reminder not found"}), 404
+
+    pet_id = reminder["pet_id"] # Get the pet_id from the reminder
+    reminder_type = reminder["type"] # Get the type of the reminder
+    
+    # Update the pets lastReminders field to remove the deleted reminder
     result = reminders.delete_one({"_id": reminder_obj_id})
 
     if result.deleted_count == 0:
         return jsonify({"error": "Reminder not found"}), 404
     
+    # Check if there are other reminders of this type for this pet
+    latest_reminder = reminders.find_one(
+        {"pet_id": pet_id, "type": reminder_type},
+        sort=[("date", -1)]  # Get the date of most recent remaining reminder
+    )
+
+    if latest_reminder:
+        # Update lastReminders with the new most recent date
+        pets.update_one(
+            {"_id": pet_id},
+            {"$set": {f"lastReminders.{reminder_type}": latest_reminder["date"]}}
+        )
+    else:
+        # No more reminders of this type — remove the field
+        pets.update_one(
+            {"_id": pet_id},
+            {"$unset": {f"lastReminders.{reminder_type}": ""}}
+        )
+    
     return jsonify({"message": "Reminder deleted successfully"}), 200
 
-# -------------------------------------
-# JOB: Scheduler for upcoming reminders
-# -------------------------------------
+# -------------------------------------------------------------
+# JOB: Scheduler for upcoming reminders and proactive reminders
+# -------------------------------------------------------------
 def check_reminders():
-    vancouver_tz = pytz.timezone("America/Vancouver")
+    vancouver_tz = pytz.timezone("America/Vancouver") # Set timezone to Vancouver
+    # Get the current date in Vancouver timezone
     today = datetime.datetime.now(vancouver_tz).date()
-    print("🚀 Running check_reminders for:", today)
+    print("Running check_reminders for:", today)
     
     # Fetch reminders for today
     reminders_list = list(reminders.find({"date": str(today), "status": "Pending"}))
-    print("📌 Reminders found:", len(reminders_list))
+    print("Reminders found:", len(reminders_list))
 
+    # Check if there are any reminders for today
     if not reminders_list:
         logging.info("No reminders for today")
         return
 
+    # Iterate through each reminder
     for reminder in reminders_list:
         # Retrieve pet and owner details
         pet = pets.find_one({"_id": reminder["pet_id"]})
@@ -249,21 +317,75 @@ def check_reminders():
 
         send_email(owner["email"], "Furbot Reminder", email_body)
             
-        # Update reminder status to "Completed"
+        # Update reminder status to "Completed" so it won't be sent again
         reminders.update_one({"_id": reminder["_id"]}, {"$set": {"status": "Completed"}})
         logging.info("Reminder status updated to Completed")
 
-# Schedule the job to run every day at 12:00 AM 
-scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") 
+
+# Schedule the job to run
+scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", minute="*") # For testing, run every minute
 
 
-# ------------------------------
-# API: Manual Test email
-# ------------------------------
-# @app.route(f"{API_PREFIX}/run_scheduler_now", methods=["POST"])
-# def run_scheduler_now():
-#     check_reminders()
-#     return jsonify({"message": "Reminder job executed manually."}), 200
+
+# Function to check proactive reminders
+def check_proactive_reminders():
+    vancouver_tz = pytz.timezone("America/Vancouver")
+    today = datetime.datetime.now(vancouver_tz).date()
+    print("Running check_proactive_reminders for:", today)
+
+    reminder_gap_days = {
+        "Grooming": 30, # Grooming reminders every 30 days
+        "Vaccination": 365, # Vaccination reminders every 365 days
+    }
+
+    pets_found = 0
+    suggestions_made = 0
+
+    # Fetch all pets and their last reminders
+    for pet in pets.find():
+        pets_found += 1 # Count the number of pets found
+        pet_name = pet.get("name", "your pet")
+        owner_id = pet.get("owner_id")
+        last_reminders = pet.get("lastReminders", {}) # Dictionary to hold last reminder dates
+        suggested = [] # List to hold suggested reminders
+
+        
+        for reminder_type, max_days in reminder_gap_days.items():  # Check for each reminder type 
+            last_date_str = last_reminders.get(reminder_type) # Get the last reminder date for the type
+            if not last_date_str: # If no last reminder date, skip this type
+                continue
+
+            last_date = datetime.datetime.strptime(last_date_str, "%Y-%m-%d").date() # Convert string to date
+            if (today - last_date).days >= max_days: # Check if the gap exceeds the threshold
+                # Suggest a new reminder    
+                message = f"It's been over {max_days} days since your last {reminder_type.lower()} for {pet_name}. Would you like to schedule one?"
+                suggested.append({"type": reminder_type, "message": message})
+
+        # Update pet with user suggestions, this is in preparation for limiting the number of email suggestions sent
+        if suggested:
+            pets.update_one(
+                {"_id": pet["_id"]},
+                {
+                    "$set": {
+                        "suggestedReminders": suggested,
+                        "suggestedReminders_last_sent": today.strftime("%Y-%m-%d")
+                    }
+                }
+            )
+            suggestions_made += 1 # Count the number of suggestions made
+
+            # Send email if we have user info
+            owner = users.find_one({"_id": owner_id})
+            if owner and owner.get("email"):
+                subject = f"Reminder for {pet_name}"
+                body = "\n\n".join([s["message"] for s in suggested])
+                send_email(owner["email"], subject, body)
+                print(f"Sent suggestion email to {owner['email']} for {pet_name}")
+
+    print(f"Proactive check complete. Pets checked: {pets_found}, Suggestions made: {suggestions_made}")
+
+scheduler.add_job(id="check_proactive_reminders", func=check_proactive_reminders, trigger="cron", minute="*") # For testing, run every minute change to hour="1" in production to run at 1 AM.
+       
 
 # ------------------------------
 # API: Add a new pet
@@ -272,14 +394,16 @@ scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", mi
 def add_pet():
     data = request.json
 
-    owner_id = str(data.get("owner_id", ""))
+    owner_id = str(data.get("owner_id", "")) ## Get the owner_id from the request data
+    # Check if the owner exists
 
-    # Validate input
+    # Check if required fields are present
     if not owner_id or "name" not in data or "dob" not in data:
         return jsonify({"error": "Missing required fields (owner_id, name, dob)"}), 400
     
+    # Validate the owner_id format
     try:
-        owner_obj_id = ObjectId(owner_id)  # validate owner_id
+        owner_obj_id = ObjectId(owner_id)
     except Exception:
         return jsonify({"error": "Invalid owner_id format"}), 400
         
@@ -435,32 +559,23 @@ def chatbot():
 
 
 # ------------------------------
-# Testing CORS
-# ------------------------------
-
-@app.route(f"{API_PREFIX}/test-cors", methods=["GET"])
-def test_cors():
-    return jsonify({
-        "status": "working",
-        "env": os.getenv("FLASK_ENV"),
-        "api_prefix": API_PREFIX
-    })
-
-
-
-# ------------------------------
 # Run Flask App
 # ------------------------------
 with app.app_context():
 
+# Calling the check_reminders and check_proactive_reminders functions once on startup for testing
     with app.app_context():
-        check_reminders()  # Run the reminder job once on startup for testing
+        check_reminders()  
+        check_proactive_reminders() 
     
-    print("\n✅ REGISTERED ROUTES:")
+  
+  # Print registered routes for debugging
+    print("\nRegistered Routes:")
     for rule in app.url_map.iter_rules():
-        print(f"🔹 {rule}")
+        print(f"- {rule}")
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 5000)) # Default port is 5000
+    app.run(host='0.0.0.0', port=port) # Run the Flask app on the specified port
 

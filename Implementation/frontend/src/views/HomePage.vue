@@ -5,8 +5,8 @@
         <p class="tagline">Your friendly pet assistant</p>
   
         <nav class="nav-links">
-          <router-link to="/login" class="nav-btn">🐾 Login</router-link>
-          <router-link to="/signup" class="nav-btn">📝 Signup</router-link>
+          <router-link to="/login" class="nav-btn">Login</router-link>
+          <router-link to="/signup" class="nav-btn">Signup</router-link>
         </nav>
       </div>
     </div>

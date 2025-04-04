@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-card">
       <img src="/logo.jpg" alt="FurBot Logo" class="logo" />
-      <h1 class="title">Welcome Back to FurBot 🐾</h1>
+      <h1 class="title">Welcome Back to FurBot</h1>
       <form @submit.prevent="handleLogin" class="login-form">
         <input v-model="email" type="email" placeholder="Email" required />
         <input v-model="password" type="password" placeholder="Password" required />

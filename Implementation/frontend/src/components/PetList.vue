@@ -1,7 +1,7 @@
 <template>
     <div class="container">
       <!-- Add Pet Form -->
-      <h3 class="title">Add a New Pet</h3>
+      <h3 class="title">🐾 Add a New Pet</h3>
   
       <form @submit.prevent="addNewPet" class="pet-form">
         <input v-model="name" type="text" placeholder="Pet Name" required />
@@ -23,7 +23,7 @@
       </div>
   
       <!-- Pet List -->
-      <h2 class="list-title">My Pet List 🐶🐱</h2>
+      <h2 class="list-title">🐾 My Pet List</h2>
       <transition-group name="fade" tag="div" class="pet-list">
         <div
           v-for="pet in filteredPets"

@@ -26,7 +26,7 @@
       <!-- Pet List Section -->
       <div class="card-section">
         <button class="section-toggle" @click="showPets = !showPets">
-          🐶 My Pet List
+          My Pet List
         </button>
         <transition name="fade">
           <div v-if="showPets" class="section-content">
@@ -38,7 +38,7 @@
       <!-- Reminders Section -->
       <div class="card-section">
         <button class="section-toggle" @click="showReminders = !showReminders">
-          📅 Upcoming Reminders
+          Upcoming Reminders
         </button>
         <transition name="fade">
           <div v-if="showReminders" class="section-content">
