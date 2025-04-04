@@ -1,18 +1,19 @@
-import os
-from flask import Flask, request, jsonify, send_from_directory
-import logging
-from flask_cors import CORS
-from flask_mail import Mail, Message
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-import requests
-from werkzeug.security import generate_password_hash, check_password_hash
-import jwt 
-import pytz
-import datetime
-from dotenv import load_dotenv
-from flask_apscheduler import APScheduler
+import os # This is for environment variables
+from flask import Flask, request, jsonify, send_from_directory # This is for Flask web framework
+import logging # This is for logging used for devbugging and error tracking
+from flask_cors import CORS # This is for Cross-Origin Resource Sharing
+from flask_mail import Mail, Message # This is for sending emails
+from pymongo import MongoClient # This is for MongoDB connection
+from bson.objectid import ObjectId # This is for MongoDB ObjectId handling
+import requests # This is for making HTTP requests to the Yelp API
+from werkzeug.security import generate_password_hash, check_password_hash # This is for password hashing and checking
+import jwt # This is for JWT token generation and verification
+import pytz # This is for timezone handling
+import datetime # This is for date and time handling
+from dotenv import load_dotenv # This is for loading environment variables from a .env file
+from flask_apscheduler import APScheduler # This is for scheduling tasks
 from fuzzywuzzy import fuzz  # This is for string matching algorithm
+
 
 
 # Allow fuzzy or alternate names for the reminder types
@@ -40,7 +41,7 @@ if os.getenv("FLASK_ENV") != "production":
 # Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize Flask app and set static folder for frontend
+# Used for productionInitialize Flask app and set static folder for frontend
 # When a user visits your site (like /, /login, /dashboard, etc.):
 # Flask checks ../frontend/dist for a matching file
 # If it finds one, it serves that file (like index.html or app.js).
@@ -89,6 +90,7 @@ db = client["furbot"]  # Database name
 users = db["users"]    # Users collection
 pets = db["pets"]      # Pets collection
 reminders = db["reminders"]  # Reminders collection
+favorites =db["favorites"] # Collection to store user's saved businesses from yelp results
 
 # Load Yelp API Key
 YELP_API_KEY = os.getenv("YELP_API_KEY")
@@ -109,6 +111,73 @@ def send_email(to_email, subject, body):
     msg = Message(subject, recipients=[to_email])
     msg.body = body
     mail.send(msg)
+
+# ------------------------------------------
+# API: Saving a favorite result to favorites  
+# -------------------------------------------
+@app.route(f"{API_PREFIX}/favorites", methods=["POST"])
+def add_favorite():
+    data = request.json
+
+    try:
+        # to prevent duplicate entries, check if the user already has this favorite
+        existing = favorites.find_one({
+            "owner_id": ObjectId(data["owner_id"]),
+            "business_id": data["business_id"]
+        })
+        if existing:
+            return jsonify({"error": "This business is already in your favorites."}), 200
+        
+        data["owner_id"] = ObjectId(data["owner_id"]) # Convert owner_id to ObjectId
+        favorites.insert_one(data) # Insert the favorite into the database
+        return jsonify({"message": "Favorite added successfully!"}), 201
+    except Exception as e:
+        print("Error adding favorite:", str(e))
+        return jsonify({"error": "Failed to add favorite"}), 500
+
+
+
+# ------------------------------------------
+# API: Get all favorites for a user
+# ------------------------------------------
+@app.route(f"{API_PREFIX}/favorites/<owner_id>", methods=["GET"])
+def get_favorites(owner_id):
+    try:
+        owner_obj_id = ObjectId(owner_id)  # Validate owner_id format
+    except Exception:
+        return jsonify([]), 200  # Return empty list if invalid owner_id
+
+    favorites_list = list(favorites.find({"owner_id": owner_obj_id}, {"_id": 1, "business_id": 1, "owner_id": 1, "name": 1, "image_url": 1, "rating": 1, "location": 1})) # Get all favorites for the user
+
+    # Convert ObjectId to string before returning the response
+    for favorite in favorites_list:
+        favorite["_id"] = str(favorite["_id"])
+        favorite["owner_id"] = str(favorite.get("owner_id", "unknown"))
+
+    return jsonify(favorites_list), 200
+
+
+
+# ------------------------------------------
+# API: Delete a favorite
+# ------------------------------------------
+@app.route(f"{API_PREFIX}/favorites/<favorite_id>", methods=["DELETE"])
+def delete_favorite(favorite_id):
+    try:
+        favorite_obj_id = ObjectId(favorite_id)  # Validate favorite_id format
+    except Exception:
+        return jsonify({"error": "Invalid favorite_id format"}), 400
+
+    # Check if favorite exists
+    favorite = favorites.find_one({"_id": favorite_obj_id})
+    if not favorite:
+        return jsonify({"error": "Favorite not found"}), 404
+
+    favorites.delete_one({"_id": favorite_obj_id})
+    return jsonify({"message": "Favorite deleted successfully"}), 200
+
+
+
 
 # ------------------------------
 # API: Yelp Search  
