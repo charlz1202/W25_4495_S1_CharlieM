@@ -75,6 +75,7 @@ export default {
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
+  color: #f3f0f0;
   background: #707170;
 }
 

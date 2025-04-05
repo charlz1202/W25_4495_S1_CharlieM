@@ -16,12 +16,25 @@
     </div>
 
   <div class="dashboard-wrapper">
-    <!-- Left: Pet Profile & Reminders -->
+    <!-- Pet Profile & Reminders -->
     <div class="support-panel">
       <img src="/logo.jpg" alt="FurBot Logo" class="dashboard-logo" />
 
       <h1 class="dashboard-title">Welcome to FurBot</h1>
       <p class="subtitle">Your friendly pet assistant is ready to help!</p>
+
+
+   <!-- Favorites Section -->
+   <div class="card-section">
+      <button class="section-toggle" @click="showFavorites = !showFavorites">
+        ⭐ Saved Favorites
+      </button>
+      <transition name="fade">
+        <div v-if="showFavorites" class="section-content">
+          <FavoriteList />
+        </div>
+      </transition>
+    </div>
 
       <!-- Pet List Section -->
       <div class="card-section">
@@ -60,17 +73,21 @@ import Chatbot from "../components/Chatbot.vue";
 import PetList from "../components/PetList.vue";
 import ReminderList from "../components/ReminderList.vue";
 import { logout } from "../services/authService";
+import FavoriteList from "../components/FavoriteList.vue";
+
 
 export default {
   components: {
     Chatbot,
     PetList,
     ReminderList,
+    FavoriteList,
   },
   data() {
     return {
       showPets: true,
       showReminders: true,
+      showFavorites: true,
     };
   },
   methods: {

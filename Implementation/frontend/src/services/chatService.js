@@ -64,6 +64,8 @@ export const sendMessageToChatbot = async (message) => {
                 params:{term: searchTerm, location: location, category: category}
             });
 
+            console.log("Yelp full response:", response.data); 
+
             if(!response.data || !response.data.businesses || response.data.businesses.length === 0) {
                 return{reply: `I couldn't find any ${searchTerm} near you. Try a different location!`};
             }

@@ -12,6 +12,7 @@
 
         <p v-else class="no-reminders">No reminders found.</p>            
     </div>
+
 </template>
 
 <style scoped>

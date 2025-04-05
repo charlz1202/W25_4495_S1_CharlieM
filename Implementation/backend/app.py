@@ -126,7 +126,7 @@ def add_favorite():
             "business_id": data["business_id"]
         })
         if existing:
-            return jsonify({"error": "This business is already in your favorites."}), 200
+            return jsonify({"error": "This is already in your favorites."}), 200
         
         data["owner_id"] = ObjectId(data["owner_id"]) # Convert owner_id to ObjectId
         favorites.insert_one(data) # Insert the favorite into the database
@@ -192,9 +192,15 @@ def yelp_search():
         "Authorization": f"Bearer {YELP_API_KEY}",
         "Content-Type": "application/json"
     }
+
+    print("Using API Key:", "Yes" if YELP_API_KEY else "Missing") # Debugging
+
     url = f"https://api.yelp.com/v3/businesses/search?term={term}&location={location}&categories={category}"
 
     response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print("Yelp API Error Response:", response.status_code, response.text)
+
     return response.json() if response.status_code == 200 else {"error": "Failed to fetch Yelp data"}
 
 # ------------------------------
@@ -269,9 +275,9 @@ def get_reminders(pet_id):
 
     return jsonify(reminders_list), 200
 
-# ------------------------------
+# ------------------------------------
 # API: Get All Reminders for an owner
-# ------------------------------
+# ------------------------------------
 @app.route(f"{API_PREFIX}/reminders/owner/<owner_id>", methods=["GET"])
 def get_all_reminders(owner_id):
     try:
@@ -291,6 +297,7 @@ def get_all_reminders(owner_id):
         reminder["pet_id"] = str(reminder.get("pet_id", "unknown"))
 
     return jsonify(reminders_list), 200
+
 
 # ------------------------------
 # API: Delete a Reminder
@@ -336,6 +343,7 @@ def delete_reminder(reminder_id):
         )
     
     return jsonify({"message": "Reminder deleted successfully"}), 200
+
 
 # -------------------------------------------------------------
 # JOB: Scheduler for upcoming reminders and proactive reminders
@@ -443,7 +451,7 @@ def check_proactive_reminders():
             )
             suggestions_made += 1 # Count the number of suggestions made
 
-            # Send email if we have user info
+            # Send email if there is user info
             owner = users.find_one({"_id": owner_id})
             if owner and owner.get("email"):
                 subject = f"Reminder for {pet_name}"

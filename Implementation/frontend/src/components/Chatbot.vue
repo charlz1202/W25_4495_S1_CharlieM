@@ -5,7 +5,7 @@
       <h3>FurBot Chat</h3>
     </div>
 
-    <div class="chat-messages">
+    <div class="chat-messages" ref="messagesContainer">
       <div
         v-for="(message, index) in messages"
         :key="index"
@@ -29,14 +29,18 @@
             </div>
             <div class="business-details">
               <span v-if="business.rating !== 'N/A'">
-                ⭐ <strong>Rating:</strong> {{ business.rating }}
+               😊  <strong>Rating:</strong> {{ business.rating }}
               </span>
               <br />
               <span v-if="business.address !== 'No address available'">
-                📍 <strong>Address:</strong> {{ business.address }}
+                📌 <strong>Address:</strong> {{ business.address }}
               </span>
             </div>
-          </li>
+               
+           <button @click="saveToFavorites(business)" class="fav-btn">
+            ⭐ Add to Favorites
+          </button>
+         </li>
         </ul>
 
         <p v-else>{{ message.text || "I couldn't understand that." }}</p>
@@ -62,13 +66,14 @@ export default {
   data() {
     return {
       messages: [{
-        text: "👋 Hi! I'm FurBot — I can help with pet travel, finding vets & groomers.\n\nTry asking:\n• How to bring my dog to Canada?\n• What airlines allow dogs?\n• Find groomers near me",
+        text: "🐩 Hi! I'm FurBot — I can help with pet travel, finding vets & groomers.\n\nTry asking:\n• How to bring my dog to Canada?\n• What airlines allow dogs?\n• Find groomers near me",
         from: "bot"
   }],
       newMessage: "",
     };
   },
-  methods: {
+  methods: 
+  {
     async sendMessage() {
       if (!this.newMessage.trim()) return;
 
@@ -98,6 +103,8 @@ export default {
             name: business.name || "No name available",
             rating: business.rating || "N/A",
             address: business.address || "No address available",
+            image_url: business.image_url || "",                  
+            business_id: business.id || business.name             
           }));
           this.messages.push({ text: formatted, from: "bot" });
         } else {
@@ -118,18 +125,73 @@ export default {
     },
 
     scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$el.querySelector(".chat-messages");
-        if (container) {
-                    container.scrollTop = container.scrollHeight + 1000;
+      this.$nextTick(() => 
+      {
+        const container = this.$refs.messagesContainer;
+        if (container) 
+        {
+          container.scrollTop = container.scrollHeight + 1000;
         }
       });
     },
+
+    async saveToFavorites(business) {
+    const ownerId = localStorage.getItem("user_id");
+    if (!ownerId) {
+      alert("You need to be logged in to save favorites.");
+      return;
+    }
+
+    const payload = {
+      owner_id: ownerId,
+      business_id: business.business_id || business.name,
+      name: business.name || "Unnamed",
+      image_url: business.image_url || "",
+      rating: business.rating || "N/A",
+      location: business.address || "Unknown location",
+    };
+
+      try {
+        const response = await fetch("/api/favorites", {
+          method: "POST",
+          headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      
+        if (response.ok) {
+          alert("✅ Added to Favorites!");
+        } else {
+          alert(result.error || "Something went wrong.");
+        }
+    } catch (err) {
+      console.error("Failed to save favorite:", err);
+      alert("Failed to save favorite.");
+    } 
   },
+},
+
+
 };
 </script>
 
 <style scoped>
+.fav-btn {
+  margin-top: 8px;
+  background: #ff9800;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.fav-btn:hover {
+  background: #e68900;
+}
 .chat-container {
   background: #fff;
   height: 100%;
