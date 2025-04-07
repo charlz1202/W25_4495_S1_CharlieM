@@ -1,7 +1,7 @@
 import os # This is for environment variables
 from flask import Flask, request, jsonify, send_from_directory # This is for Flask web framework
 import logging # This is for logging used for devbugging and error tracking
-from flask_cors import CORS # This is for Cross-Origin Resource Sharing
+from flask_cors import CORS, cross_origin # This is for Cross-Origin Resource Sharing
 from flask_mail import Mail, Message # This is for sending emails
 from pymongo import MongoClient # This is for MongoDB connection
 from bson.objectid import ObjectId # This is for MongoDB ObjectId handling
@@ -577,6 +577,7 @@ def register():
 # API: User Login
 # ------------------------------
 @app.route(f"{API_PREFIX}/login", methods=["POST","OPTIONS"])
+@cross_origin(origins=allowed_origins, supports_credentials=True, methods=["POST", "OPTIONS"])
 def login():
     if request.method == "OPTIONS":
         return '', 200 # Handle preflight request
