@@ -64,10 +64,9 @@ API_PREFIX = "/api" if IS_PRODUCTION else ""
 # Print environment variables for debugging
 print("FLASK_ENV:", os.getenv("FLASK_ENV"))
 print("Running in PRODUCTION?" , os.getenv("FLASK_ENV") == "production")
-print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
+print("REGISTERED ROUTE:", f"{API_PREFIX}/login") # Debugging route for login
 
-# Set CORS for the app 
-# This allows cross-origin requests from specified origins
+# Handle CORS Globally
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",") # Comma-separated list of allowed origins
 print("Allowed CORS Origins:", allowed_origins)
 CORS(app,
