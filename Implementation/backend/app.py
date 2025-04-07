@@ -68,7 +68,7 @@ print("REGISTERED ROUTE:", f"{API_PREFIX}/login") # Debugging route for login
 
 # Handle CORS Globally
 raw_env = os.getenv("CORS_ORIGINS", "*") # Get the CORS_ORIGINS environment variable
-print("CORS_ORIGINS:", raw_env) # Debugging
+print("CORS_ORIGINS:", repr(raw_env)) # Debugging
 
 # Split the CORS_ORIGINS variable into a list of allowed origins
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",") # Comma-separated list of allowed origins
