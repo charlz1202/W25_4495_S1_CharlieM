@@ -16,7 +16,6 @@ from fuzzywuzzy import fuzz  # This is for string matching algorithm
 
 
 
-# Allow fuzzy or alternate names for the reminder types
 # These are the types of reminders we support in the app
 reminder_type_aliases = {
     "grooming": "Grooming",
@@ -27,8 +26,12 @@ reminder_type_aliases = {
     "vaccination": "Vaccination",
     "vaccines": "Vaccination",
     "booster": "Vaccination",
-    "checkup": "Checkup",
-    "dental": "Dental Care"
+    "shots": "Vaccination",
+    "inoculation": "Vaccination",
+    "immunization": "Vaccination",
+    "dose": "Vaccination",
+    "jab": "Vaccination",
+    "vaccinate": "Vaccination",
 }
 
 
@@ -66,6 +69,7 @@ print("REGISTERED ROUTE:", f"{API_PREFIX}/login")
 # Set CORS for the app 
 # This allows cross-origin requests from specified origins
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",") # Comma-separated list of allowed origins
+print("Allowed CORS Origins:", allowed_origins)
 CORS(app,
      origins=allowed_origins,
      supports_credentials=True,
@@ -350,15 +354,15 @@ def delete_reminder(reminder_id):
 # -------------------------------------------------------------
 def check_reminders():
     vancouver_tz = pytz.timezone("America/Vancouver") # Set timezone to Vancouver
-    # Get the current date in Vancouver timezone
+    # Set the date to the current date in Vancouver timezone
     today = datetime.datetime.now(vancouver_tz).date()
-    print("Running check_reminders for:", today)
+    print("Running check_reminders for:", today) # Console log for debugging
     
     # Fetch reminders for today
     reminders_list = list(reminders.find({"date": str(today), "status": "Pending"}))
-    print("Reminders found:", len(reminders_list))
+    print("Reminders found:", len(reminders_list)) # Console log for debugging
 
-    # Check if there are any reminders for today
+    # If no reminders found, log and return
     if not reminders_list:
         logging.info("No reminders for today")
         return
@@ -406,9 +410,9 @@ scheduler.add_job(id="check_reminders", func=check_reminders, trigger="cron", mi
 
 # Function to check proactive reminders
 def check_proactive_reminders():
-    vancouver_tz = pytz.timezone("America/Vancouver")
-    today = datetime.datetime.now(vancouver_tz).date()
-    print("Running check_proactive_reminders for:", today)
+    vancouver_tz = pytz.timezone("America/Vancouver") # Set timezone to Vancouver
+    today = datetime.datetime.now(vancouver_tz).date() # Set the date to the current date in Vancouver timezone
+    print("Running check_proactive_reminders for:", today) # Console log for debugging
 
     reminder_gap_days = {
         "Grooming": 30, # Grooming reminders every 30 days
@@ -421,8 +425,8 @@ def check_proactive_reminders():
     # Fetch all pets and their last reminders
     for pet in pets.find():
         pets_found += 1 # Count the number of pets found
-        pet_name = pet.get("name", "your pet")
-        owner_id = pet.get("owner_id")
+        pet_name = pet.get("name", "your pet") # Get the pet name or default to "your pet"
+        owner_id = pet.get("owner_id") # Get the owner ID
         last_reminders = pet.get("lastReminders", {}) # Dictionary to hold last reminder dates
         suggested = [] # List to hold suggested reminders
 
@@ -435,7 +439,10 @@ def check_proactive_reminders():
             last_date = datetime.datetime.strptime(last_date_str, "%Y-%m-%d").date() # Convert string to date
             if (today - last_date).days >= max_days: # Check if the gap exceeds the threshold
                 # Suggest a new reminder    
-                message = f"It's been over {max_days} days since your last {reminder_type.lower()} for {pet_name}. Would you like to schedule one?"
+                message = (
+                    f"It's been over {max_days} days since your last {reminder_type.lower()} for {pet_name}. "
+                    f"Log in to FurBot to schedule a {reminder_type.lower()} appointment: https://furbot.app/login"
+)
                 suggested.append({"type": reminder_type, "message": message})
 
         # Update pet with user suggestions, this is in preparation for limiting the number of email suggestions sent
@@ -457,9 +464,9 @@ def check_proactive_reminders():
                 subject = f"Reminder for {pet_name}"
                 body = "\n\n".join([s["message"] for s in suggested])
                 send_email(owner["email"], subject, body)
-                print(f"Sent suggestion email to {owner['email']} for {pet_name}")
+                print(f"Sent suggestion email to {owner['email']} for {pet_name}") # Console log for debugging
 
-    print(f"Proactive check complete. Pets checked: {pets_found}, Suggestions made: {suggestions_made}")
+    print(f"Proactive check complete. Pets checked: {pets_found}, Suggestions made: {suggestions_made}") # Console log for debugging
 
 scheduler.add_job(id="check_proactive_reminders", func=check_proactive_reminders, trigger="cron", minute="*") # For testing, run every minute change to hour="1" in production to run at 1 AM.
        

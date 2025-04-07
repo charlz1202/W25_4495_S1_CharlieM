@@ -6,7 +6,7 @@
         <li v-for="fav in favorites" :key="fav._id" class="favorite-item">
           <div class="fav-info">
             <strong>{{ fav.name }}</strong><br />
-            ⭐ {{ fav.rating }}<br />
+            😊 {{ fav.rating }}<br />
             📍 {{ fav.location }}
           </div>
           <button @click="removeFavorite(fav._id)">Remove</button>
