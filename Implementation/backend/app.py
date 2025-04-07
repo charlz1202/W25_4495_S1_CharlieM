@@ -49,8 +49,7 @@ logging.basicConfig(level=logging.INFO)
 # Flask checks ../frontend/dist for a matching file
 # If it finds one, it serves that file (like index.html or app.js).
 # If it doesn't find one, it returns a 404 error.
-app = Flask(__name__, static_folder="../frontend/dist")
-
+app = Flask(__name__, static_folder="frontend_dist")
 
 # Initialize APScheduler
 scheduler = APScheduler()

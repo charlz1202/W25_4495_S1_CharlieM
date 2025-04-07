@@ -9,8 +9,7 @@
         padding: 10px 16px;
         border-radius: 8px;
         font-weight: bold;
-        cursor: pointer;
-      ">
+        cursor: pointer;">
         Logout
       </button>
     </div>
@@ -31,7 +30,7 @@
       </button>
       <transition name="fade">
         <div v-if="showFavorites" class="section-content">
-          <FavoriteList />
+          <FavoriteList ref="favoriteList" />
         </div>
       </transition>
     </div>
@@ -97,6 +96,12 @@ export default {
         this.$router.push("/login");
       } catch (error) {
         console.error("Logout failed:", error);
+      }
+    },
+  handleFavoriteAdded() {
+      const favListRef = this.$refs.favoriteList;
+      if (favListRef && typeof favListRef.fetchFavorites === 'function') {
+        favListRef.fetchFavorites();
       }
     },
   },

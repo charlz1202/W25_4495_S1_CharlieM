@@ -163,7 +163,8 @@ export default {
       const result = await response.json();
       
         if (response.ok) {
-          alert("✅ Added to Favorites!");
+          alert("✅Added to Favorites!");
+          this.$emit("favorite-added");
         } else {
           alert(result.error || "Something went wrong.");
         }
