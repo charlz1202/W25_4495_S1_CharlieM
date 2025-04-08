@@ -18,30 +18,32 @@ if not API_KEY:
 # Yelp API Base URL
 BASE_URL = "https://api.yelp.com/v3/businesses/search"
 
-def search_yelp(term="pet services", location="New Westminser, BC", category="petservices,groomer,vet,dog_parks,petstore,pet_training,petboarding"):
+def search_yelp(term="pet services", location="Vancouver, BC", category=None, attributes=None):
     headers = {
-        "Authorization":f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
 
     params = {
         "term": term,
         "location": location,
-        "categories": category,
         "limit": 5
     }
 
-    # Debugging Purpose
-    print(f"Searching Yelp API for {term}: {params}")
-    print(f"API_KEY: {API_KEY}")
+    if category:
+        params["categories"] = category
+    if attributes:
+        params["attributes"] = attributes
+
+    print(f"Yelp Search Params: {params}")
 
     response = requests.get(BASE_URL, headers=headers, params=params)
 
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Failed to fetch data from Yelp API. Status code: {response.text}")
+        print(f"Yelp API Error: {response.status_code} | {response.text}")
         return {
-            "error": f"Failed to fetch data from Yelp API. Status code: {response.status_code}",
+            "error": f"Failed with status {response.status_code}",
             "details": response.json()
         }
