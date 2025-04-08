@@ -25,6 +25,7 @@ export const sendMessageToChatbot = async (message) => {
           ) {
             let searchTerm="";
             let category = "";
+            let attributes = ""; // For dog-friendly restaurants and hotels
 
             // Detect Service Type
 
@@ -51,6 +52,16 @@ export const sendMessageToChatbot = async (message) => {
             else if(lowerMessage.includes("trainer") || lowerMessage.includes("training")) {
                 searchTerm = "dog training";
                 category = "pet_training";
+            }
+            else if(lowerMessage.includes("restaurant") || lowerMessage.includes("cafe") || lowerMessage.includes("eat")) {
+                searchTerm = "restaurants";
+                category = "restaurants";
+                attributes = "dog_friendly";
+            }
+            else if(lowerMessage.includes("hotel") || lowerMessage.includes("stay") || lowerMessage.includes("accommodation")) {
+                searchTerm = "hotels";
+                category = "hotels";
+                attributes = "dog_friendly";
             }
             else {
                 searchTerm = "pet services";

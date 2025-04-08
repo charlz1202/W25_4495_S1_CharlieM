@@ -62,7 +62,7 @@
 
     <!-- Right: Chatbot Section -->
     <div class="chatbot-wrapper">
-    <Chatbot :alwaysOpen="true" />
+    <Chatbot :alwaysOpen="true" @favorite-added="handleFavoriteAdded" />
   </div>
   </div>
 </template>

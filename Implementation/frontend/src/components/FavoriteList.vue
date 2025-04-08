@@ -6,8 +6,8 @@
       <li v-for="fav in favorites" :key="fav._id" class="favorite-item">
         <div class="fav-info">
           <strong>{{ fav.name }}</strong><br />
-          😊 {{ fav.rating }}<br />
-          📍 {{ fav.location }}
+           {{ fav.rating }}<br />
+           {{ fav.location }}
         </div>
         <button @click="removeFavorite(fav._id)">Remove</button>
       </li>
@@ -27,7 +27,7 @@ export default {
     async fetchFavorites() {
       const userId = localStorage.getItem("user_id");
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${userId}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/favorites/${userId}`);
         const data = await res.json();
         this.favorites = data;
       } catch (err) {
@@ -38,7 +38,7 @@ export default {
     },
     async removeFavorite(favId) {
       try {
-        await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${favId}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/favorites/${favId}`, {
           method: "DELETE",
       }); 
         this.favorites = this.favorites.filter((f) => f._id !== favId);

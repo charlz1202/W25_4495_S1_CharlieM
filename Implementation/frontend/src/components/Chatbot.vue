@@ -25,7 +25,7 @@
             class="business-item"
           >
             <div class="business-header">
-              🏥 <strong>{{ business.name }}</strong>
+              {{ categoryIcon(business.name) }} <strong>{{ business.name }}</strong>
             </div>
             <div class="business-details">
               <span v-if="business.rating !== 'N/A'">
@@ -134,6 +134,16 @@ export default {
         }
       });
     },
+
+    categoryIcon(name) {
+      const lowerName = name.toLowerCase();
+      if (lowerName.includes("hotel")) return "🏨";
+      if (lowerName.includes("restaurant") || lowerName.includes("cafe")) return "🍽️";
+      if (lowerName.includes("groom") || lowerName.includes("salon")) return "✂️";
+      if (lowerName.includes("vet") || lowerName.includes("clinic")) return "🐾";
+      if (lowerName.includes("park")) return "🏞️";
+      return "🏠"; // default icon
+   },
 
     async saveToFavorites(business) {
     const ownerId = localStorage.getItem("user_id");
