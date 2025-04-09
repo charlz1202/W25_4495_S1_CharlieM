@@ -103,10 +103,3 @@ export const sendMessageToChatbot = async (message) => {
         return { reply:"I'm sorry, I'm having trouble right now. Please try again later."};
     }
 };
-
-        
-        
-        
-        
-
-         

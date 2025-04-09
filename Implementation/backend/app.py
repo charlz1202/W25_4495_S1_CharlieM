@@ -13,8 +13,31 @@ import datetime # This is for date and time handling
 from dotenv import load_dotenv # This is for loading environment variables from a .env file
 from flask_apscheduler import APScheduler # This is for scheduling tasks
 from fuzzywuzzy import fuzz  # This is for string matching algorithm
+import spacy # This is for NLP (Natural Language Processing) library
+from yelp_service import search_yelp  # Importing the search_yelp function from yelp_service.py
+import re # This is for regular expressions
 
 
+# Load spaCy NLP
+nlp = spacy.load("en_core_web_sm") # Load the English NLP model
+
+# Yelp intent configuration
+intent_to_yelp_config = {
+    "local_vet_search": {"term": "veterinarians", "category": "vet"},
+    "grooming_request": {"category": "groomer"},
+    "pet_friendly_hotels": {"category": "hotels", "attributes": "dog_friendly"},
+    "pet_friendly_restaurants": {"category": "restaurants", "attributes": "dog_friendly"},
+    "dog_parks_nearby": {"category": "dog_parks"},
+    "pet_hiking_spots": {"category": "hiking"},
+    "pet_stores_nearby": {"term": "pet store", "category": "petstore"},
+    "pet_friendly_malls": {"term": "shopping", "category": "shopping", "attributes": "dog_friendly"},
+    "near_me_search": {"term": "pet services"},
+    "local_services_city": {"term": "pet groomers"},
+    "find_pet_friendly_groomers": {"category": "groomer", "attributes": "dog_friendly"},
+    "find_pet_friendly_vets": {"category": "vet", "attributes": "dog_friendly"},
+    "find_pet_friendly_stores": {"category": "petstore", "attributes": "dog_friendly"},
+    "find_pet_friendly_cafes": {"category": "cafes", "attributes": "dog_friendly"}
+}
 
 # These are the types of reminders we support in the app
 reminder_type_aliases = {
@@ -97,6 +120,8 @@ users = db["users"]    # Users collection
 pets = db["pets"]      # Pets collection
 reminders = db["reminders"]  # Reminders collection
 favorites =db["favorites"] # Collection to store user's saved businesses from yelp results
+intents = db["intents"] # Collection to store intents for the chatbot
+
 
 # Load Yelp API Key
 YELP_API_KEY = os.getenv("YELP_API_KEY")
@@ -606,44 +631,114 @@ def login():
         print("Login error:", str(e))
         return jsonify({"error": "Server error"}), 500
 
+
+
 # ------------------------------
 # API: Chatbot  
 # ------------------------------
 @app.route(f"{API_PREFIX}/chatbot", methods=["POST"])
 def chatbot():
     data = request.json
-    user_message = data.get("message", "").lower()
+    user_message = data.get("message", "").strip()
 
-    # Simple chatbot logic
-    if "hello" in user_message or "hi" in user_message:
-        return jsonify({"reply": "Hello! How can I help you today?"})
-    elif "help" in user_message:
-        return jsonify({"reply": "I can help you find pet-related services. Try typing 'Find dog groomers'!"})
-    else:
-        # Additional logic using string matching via Fuzzywuzzy compares the user message with the examples in the database and
-        # calculate levenshtein distance to find the best match
-        intents = list(db["intents"].find({}))
-        best_score = 0
-        best_match = None
+    if not user_message:
+        return jsonify({"reply": "Please say something!"})
 
-        for intent in intents:
-            for example in intent.get("examples", []):
-                score = fuzz.token_set_ratio(user_message, example.lower()) # Compares WORD similarity
-                print(f"Comparing with: {example}, Score: {score}")
-                if score > best_score:
-                    best_score = score
-                    best_match = intent
+    # Basic greeting and help responses
+    user_message_lower = user_message.lower()
 
-        if best_match and best_score >= 60: # Threshold for a good match
-            print("Best Match:", best_match["examples"])
-            print("Matched Intent:", best_match["intent"])
+    if "hello" in user_message_lower or "hi" in user_message_lower:
+        return jsonify({"reply": "👋 Hello! I'm FurBot. Ask me anything about pet travel, care, or services!"})
+    elif "help" in user_message_lower:
+        return jsonify({"reply": "💡 Try asking things like:\n• Where can I find a groomer?\n• How do I fly with my dog?\n• Show pet stores in Vancouver"})
+
+    # Run spaCy NLP to detect location entities
+    doc = nlp(user_message.title())  # Capitalizing helps spaCy detect proper nouns
+    gpe = next((ent.text for ent in doc.ents if ent.label_ == "GPE"), None) # Get theGPE based on the user message
+
+    # If no GPE detected, use regex to find location in the message
+    if not gpe:
+        match = re.search(r"in ([A-Z][a-z]+(?: [A-Z][a-z]+)?)", user_message)
+        if match:
+            gpe = match.group(1)
+
+    detected_location = gpe or "Vancouver, BC"  # Default to Vancouver if no location detected
+
+    print("Detected GPE (city):", gpe)
+    print("Final Location for Yelp Search:", detected_location)
+
+    # Load intents from MongoDB
+    intents = list(db["intents"].find({}))
+    best_score = 0 # Initialize best score for fuzzy matching
+    best_match = None # Initialize best match for fuzzy matching
+
+    # Fuzzywuzzy to match user message against intent examples
+    for intent in intents:
+        for example in intent.get("examples", []):
+            # Compare input with each example using fuzzy string matching
+            score = fuzz.token_set_ratio(user_message_lower, example.lower())
+            print(f"Comparing with: {example} | Score: {score}")
+            if score > best_score:
+                best_score = score
+                best_match = intent
+
+    # Return best match if confidence is high enough
+    if best_match and best_score >= 60:
+        intent_name = best_match["intent"]
+        print(f"Matched Intent: {intent_name} | Confidence: {best_score}")
+
+        
+        # Debug print: what we’re sending to Yelp
+        print("Detected Location:", detected_location)
+        print("Intent:", intent_name)
+       
+        
+        
+        # If intent triggers Yelp, use dynamic search
+        if intent_name in intent_to_yelp_config:
+            yelp_config = intent_to_yelp_config[intent_name]
+            print("Yelp Config:", yelp_config)
+
+            yelp_result = search_yelp(
+                term=yelp_config.get("term", "pet services"),
+                location=detected_location,
+                category=yelp_config.get("category"),
+                attributes=yelp_config.get("attributes")
+            )
+
+            businesses = yelp_result.get("businesses", [])
+            results = [
+                {
+                    "name": b.get("name", "No name"),
+                    "rating": b.get("rating", "N/A"),
+                    "address": b.get("location", {}).get("address1", "No address"),
+                    "image_url": b.get("image_url", ""),
+                    "id": b.get("id", b.get("name", "unknown"))
+                } for b in businesses
+            ]
+
             return jsonify({
-                "reply": best_match["response"],
-                "link": best_match.get("more_info_link", "")
+                "reply": results,
+                "intent": intent_name,
+                "confidence": best_score,
+                "location_detected": detected_location
             })
-        else:
-            return jsonify({"reply": "I'm not sure what you mean. Can you rephrase?"})
 
+        # Return the static MongoDB response if no Yelp config is found
+        return jsonify({
+            "reply": best_match.get("response", "I matched something, but no response is set."),
+            "intent": intent_name,
+            "confidence": best_score,
+            "location_detected": detected_location
+        })
+
+    # Fallback message
+    return jsonify({
+        "reply": "I'm not sure what you mean. Try asking about grooming, pet-friendly places, or travel tips!",
+        "intent": "default_fallback",
+        "confidence": best_score,
+        "location_detected": gpe or "None"
+    })
 
 # ------------------------------
 # Run Flask App
