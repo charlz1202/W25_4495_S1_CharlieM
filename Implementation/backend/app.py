@@ -16,10 +16,15 @@ from fuzzywuzzy import fuzz  # This is for string matching algorithm
 import spacy # This is for NLP (Natural Language Processing) library
 from yelp_service import search_yelp  # Importing the search_yelp function from yelp_service.py
 import re # This is for regular expressions
+import subprocess # This is for running shell commands
 
 
 # Load spaCy NLP
-nlp = spacy.load("en_core_web_sm") # Load the English NLP model
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"]) # Download the spaCy model if not already installed
+    nlp = spacy.load("en_core_web_sm")
 
 # Yelp intent configuration
 intent_to_yelp_config = {
