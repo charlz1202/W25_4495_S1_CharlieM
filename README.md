@@ -12,19 +12,40 @@
 
 FurBot is a **web-based chatbot** designed to help dog owners with everyday needs. Whether you're looking for **dog-friendly parks, restaurants, cafes, grooming salons, vet clinics, or supplies**, FurBot has you covered!  
 
-#### New Feature: Pet Profile Management & Reminders  
-Now with **Pet Profile Management and Reminders**, FurBot allows users to:  
-✔ **Create and manage pet profiles** (store pet details like breed, age, and date of birth).  
-✔ **Set reminders** for vet visits, vaccinations, and grooming schedules.  
-✔ **Receive automated notifications** to ensure your pet gets the best care.  
+#### Key Features  
+-  **Pet Profile Management** – Add, update, or delete pet details (name, age, breed, etc.)  
+-  **Reminder System** – Set and view reminders for grooming, vet visits, and vaccinations  
+-  **Automated Email Notifications** – Get email alerts for upcoming pet care tasks  
+-  **Chatbot Assistance** – Ask questions like “find groomers near me” or “dog-friendly cafes”  
+-  **Favorites** – Save your most-used pet service businesses for quick access  
+-  **Location Detection** – Uses spaCy NLP and regex to recognize city names from chat input 
 
 #### Built With:  
-- **Python** (Flask for API Backend)  
-- **Natural Language Processing (NLP)**  
-- **MongoDB** (for storing pet profiles and reminders)  
-- **Vue.js** (for the frontend interface)  
+FurBot is built using a modern full-stack architecture:
 
-FurBot provides **quick and accurate responses** to enhance your pet-friendly lifestyle.
+### Frontend  
+- **Vue.js** – Responsive and dynamic user interface  
+- **Axios** – Handles communication between frontend and backend  
+
+### Backend  
+- **Python (Flask)** – Lightweight RESTful API framework  
+- **Flask-Mail** – Sends email reminders for pet care  
+- **spaCy** – NLP library for detecting location-based queries  
+
+### Database  
+- **MongoDB** – Stores user profiles, pet information, reminders, and chatbot intents  
+
+### External API Integration  
+- **Yelp Fusion API** – Provides listings for dog-friendly businesses like cafes, vets, and grooming salons  
+
+---
+
+## Production Access  
+
+You can try the deployed version of FurBot here:  
+[https://furbot-production.up.railway.app](https://furbot-production.up.railway.app)
+
+> *Note:* For full functionality, sign up for an account and explore the pet profile, reminder, and chatbot features directly in the live environment.
 
 ---
 
