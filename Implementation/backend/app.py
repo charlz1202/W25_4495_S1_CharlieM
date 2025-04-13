@@ -705,7 +705,7 @@ def chatbot():
        
         
         
-        # If intent triggers Yelp, use dynamic search
+        # best_match will be check against the intent_to_yelp_config to see to call the Yelp API
         if intent_name in intent_to_yelp_config:
             yelp_config = intent_to_yelp_config[intent_name]
             print("Yelp Config:", yelp_config)
