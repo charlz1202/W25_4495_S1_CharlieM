@@ -99,8 +99,8 @@ export default {
       }
     },
   handleFavoriteAdded() {
-      const favListRef = this.$refs.favoriteList;
-      if (favListRef && typeof favListRef.fetchFavorites === 'function') {
+      const favListRef = this.$refs.favoriteList; // Access the FavoriteList component using ref
+      if (favListRef && typeof favListRef.fetchFavorites === 'function') {  // Call the fetchFavorites method on the FavoriteList component
         favListRef.fetchFavorites();
       }
     },

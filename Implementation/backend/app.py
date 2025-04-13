@@ -72,11 +72,7 @@ if os.getenv("FLASK_ENV") != "production":
 # Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 
-# Used for productionInitialize Flask app and set static folder for frontend
-# When a user visits your site (like /, /login, /dashboard, etc.):
-# Flask checks ../frontend/dist for a matching file
-# If it finds one, it serves that file (like index.html or app.js).
-# If it doesn't find one, it returns a 404 error.
+# Front end static files directory
 app = Flask(__name__, static_folder="frontend_dist")
 
 # Initialize APScheduler
@@ -510,7 +506,7 @@ scheduler.add_job(id="check_proactive_reminders", func=check_proactive_reminders
 def add_pet():
     data = request.json
 
-    owner_id = str(data.get("owner_id", "")) ## Get the owner_id from the request data
+    owner_id = str(data.get("owner_id", "")) # Get the owner_id from the request data
     # Check if the owner exists
 
     # Check if required fields are present
@@ -601,38 +597,48 @@ def register():
     if users.find_one({"email": data["email"]}):
         return jsonify({"error": "Email already exists"}), 400
 
-    # Hash the password before storing
+    # Hash the password  using werkzeug.security before storing to mongoDB
     hashed_password = generate_password_hash(data["password"])
     users.insert_one({"email": data["email"], "password": hashed_password})
     return jsonify({"message": "User registered successfully!"}), 201
 
 # ------------------------------
-# API: User Login
+# API: User Login 
 # ------------------------------
 @app.route(f"{API_PREFIX}/login", methods=["POST","OPTIONS"])
 @cross_origin(origins=allowed_origins, supports_credentials=True, methods=["POST", "OPTIONS"])
 def login():
+    # Handle preflight request
     if request.method == "OPTIONS":
-        return '', 200 # Handle preflight request
-    
+        return '', 200  # Respond with 200 OK for preflight request
+     
     try:
+        # Parse the incoming JSON data from the request body
         data = request.get_json()
+
+        # Validate that both 'email' and 'password' are provided in the request
         if not data or "email" not in data or "password" not in data:
             return jsonify({"error": "Invalid request, missing email or password"}), 400
         
+        # Look up the user in the MongoDB 'users' collection by email
         user = users.find_one({"email": data["email"]})
+
+        # If no user found or password doesn't match, return an error
         if not user or not check_password_hash(user["password"], data["password"]):
             return jsonify({"error": "Invalid credentials"}), 401
         
         # Generate a JWT token (valid for 1 hour)
         token = jwt.encode(
             {"email": data["email"], "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)},
-            app.config["SECRET_KEY"],
-            algorithm="HS256",
+            app.config["SECRET_KEY"], # Use Flask App secret key for signing the token
+            algorithm="HS256", # Use HMAC SHA-256 algorithm for signing
         )
+
+        # Return the token and user ID in the response
         return jsonify({"token": token, "user_id": str(user["_id"])}), 200
 
     except Exception as e:
+        # If any error occurs during the process, log it and return a server error response
         print("Login error:", str(e))
         return jsonify({"error": "Server error"}), 500
 

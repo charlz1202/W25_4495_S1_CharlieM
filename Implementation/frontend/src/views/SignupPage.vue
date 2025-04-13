@@ -41,11 +41,11 @@ export default {
   methods: {
     async handleSignup() {
       try {
-        const response = await signup(this.email, this.password);
+        const response = await signup(this.email, this.password); // Call the signup function from authService
+        alert(response.message || "Signup successful!"); // Show success message
 
-        alert(response.message || "Signup successful!");
-
-        this.$router.push("/login");
+        // Redirect to login page after successful signup
+        this.$router.push("/login"); 
       } catch (error) {
         this.errorMessage = error.message || "An error occurred during signup.";
         alert(this.errorMessage);

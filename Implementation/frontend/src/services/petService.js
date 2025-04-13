@@ -19,6 +19,7 @@ export const getPets = async (ownerId) => {
     }
 };
 
+// Add a new pet function that triggers the Flask API
 export const addPet = async (ownerId, petName, species, dob, color, breed  ) => {
     try {
         const token = localStorage.getItem("token");

@@ -27,12 +27,12 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await login(this.email, this.password);
-        localStorage.setItem("token", response.token);
-        localStorage.setItem("user_id", response.user_id);
-        this.$router.push("/dashboard");
+        const response = await login(this.email, this.password); // Call the login function from authService
+        localStorage.setItem("token", response.token); // Store the token in localStorage
+        localStorage.setItem("user_id", response.user_id); // Store the user ID in localStorage
+        this.$router.push("/dashboard"); // Redirect to the dashboard after successful login
       } catch (error) {
-        this.errorMessage = "Login failed. Please check your credentials.";
+        this.errorMessage = "Login failed. Please check your credentials."; // Set the error message if login fails
       }
     },
   },

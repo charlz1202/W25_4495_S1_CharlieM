@@ -25,7 +25,7 @@ export const sendMessageToChatbot = async (message) => {
           ) {
             let searchTerm="";
             let category = "";
-            let attributes = ""; // For dog-friendly restaurants and hotels
+            let attributes = ""; // Optional attributes for Yelp API for dog-friendly places keyword
 
             // Detect Service Type
 

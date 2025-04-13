@@ -90,6 +90,7 @@
     },
   
     methods: {
+      // Fetches the list of pets
       async fetchPets() {
         try {
           const ownerId = localStorage.getItem("user_id");
@@ -100,10 +101,12 @@
         }
       },
   
+      // addNewPet method is called when the form is submitted
       async addNewPet() {
         try {
           if (!this.ownerId) throw new Error("User not logged in");
-  
+          
+          // Trigger the addPet function from petService.js to add a new pet passing the required parameters
           await addPet(
             this.ownerId,
             this.name,
@@ -113,14 +116,15 @@
             this.breed
           );
   
+          // Reset the form fields after successful addition of pet
           this.name = "";
           this.species = "";
           this.dob = "";
           this.color = "";
           this.breed = "";
   
-          alert("Pet added successfully");
-          await this.fetchPets();
+          alert("Pet added successfully"); // Show success message
+          await this.fetchPets(); // Fetch the updated list of pets
         } catch (error) {
           console.error("Error adding pet: ", error);
           alert("Failed to add pet");

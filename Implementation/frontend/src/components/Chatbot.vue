@@ -145,6 +145,7 @@ export default {
       return "🏠"; // default icon
    },
 
+   // Function to save a business to favorites
     async saveToFavorites(business) {
     const ownerId = localStorage.getItem("user_id");
     if (!ownerId) {
@@ -162,6 +163,7 @@ export default {
     };
 
       try {
+        // Send a POST request to save the favorite
         const response = await fetch("/api/favorites", {
           method: "POST",
           headers: {
@@ -174,7 +176,7 @@ export default {
       
         if (response.ok) {
           alert("✅Added to Favorites!");
-          this.$emit("favorite-added");
+          this.$emit("favorite-added"); // Emit event to refresh favorite list in Dashboard.vue
         } else {
           alert(result.error || "Something went wrong.");
         }
