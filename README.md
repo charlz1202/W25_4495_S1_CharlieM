@@ -10,10 +10,10 @@
 
 ### FurBot: Your Smart Assistant for Dog Owners  
 
-FurBot is a **web-based chatbot** designed to help dog owners with everyday needs. Whether you're looking for **dog-friendly parks, restaurants, cafes, grooming salons, vet clinics, or supplies**, FurBot has you covered!  
+FurBot is a web-based assistant that combines smart chatbot support with personalized pet profile management, helping dog owners easily handle everyday needs—from finding parks and grooming services to managing vet visits and reminders!  
 
 #### Key Features  
--  **Pet Profile Management** – Add, update, or delete pet details (name, age, breed, etc.)  
+-  **Pet Profile Management** – Add and delete pet details (name, age, breed, etc.)  
 -  **Reminder System** – Set and view reminders for grooming, vet visits, and vaccinations  
 -  **Automated Email Notifications** – Get email alerts for upcoming pet care tasks  
 -  **Chatbot Assistance** – Ask questions like “find groomers near me” or “dog-friendly cafes”  
